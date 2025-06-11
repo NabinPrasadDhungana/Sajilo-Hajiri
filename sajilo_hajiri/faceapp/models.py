@@ -49,12 +49,16 @@ class ClassSubject(models.Model):
 
 
 class StudentClassEnrollment(models.Model):
-    student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'role': 'student'})
-    class_instance = models.ForeignKey(Class, on_delete=models.CASCADE)
+    student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'is_student': True})
+    enrolled_class = models.ForeignKey(Class, on_delete=models.CASCADE)
     roll_number = models.PositiveIntegerField()
 
     class Meta:
-        unique_together = ('class_instance', 'roll_number')
+        unique_together = ('enrolled_class', 'roll_number')  # Ensures roll_number is unique per class
+
+    def __str__(self):
+        return f"{self.student.name} - {self.enrolled_class.name} (Roll: {self.roll_number})"
+
 
 class FaceEncoding(models.Model):
     student = models.OneToOneField(User, on_delete=models.CASCADE, limit_choices_to={'role': 'student'})
