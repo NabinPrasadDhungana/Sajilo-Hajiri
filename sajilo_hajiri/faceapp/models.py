@@ -50,7 +50,7 @@ class ClassSubject(models.Model):
 
 
 class StudentClassEnrollment(models.Model):
-    student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'is_student': True})
+    student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'role': 'student'})
     enrolled_class = models.ForeignKey(Class, on_delete=models.CASCADE)
     roll_number = models.PositiveIntegerField()
 
