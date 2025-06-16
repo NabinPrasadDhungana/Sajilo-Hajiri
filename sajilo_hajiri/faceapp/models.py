@@ -8,9 +8,17 @@ class User(AbstractUser):
         ('teacher', 'Teacher'),
         ('student', 'Student'),
     ]
+    APPROVAL_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('unapproved', 'Unapproved'),
+    ]
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
-    avatar = models.ImageField(upload_to='pictures/', blank=True, null=True)
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     name = models.CharField(max_length=150, blank=True, null=True)
+    approval_status = models.CharField(max_length=15, choices=APPROVAL_CHOICES, default='pending')
+    feedback = models.TextField(blank=True, null=True)  # feedback if unapproved
+
 
     def __str__(self):
         return self.name or self.username
