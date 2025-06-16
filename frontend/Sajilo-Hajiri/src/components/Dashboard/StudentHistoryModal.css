@@ -1,0 +1,83 @@
+/* StudentHistoryModal.css */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 25px 30px;
+  border-radius: 8px;
+  max-width: 700px;
+  width: 90%;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  overflow-y: auto;
+  max-height: 80vh;
+}
+
+.modal-content h2 {
+  margin-bottom: 20px;
+  color: #007bff;
+  font-weight: 700;
+  font-size: 1.8rem;
+  text-align: center;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.history-table th,
+.history-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.history-table thead {
+  background-color: #007bff;
+  color: white;
+  font-weight: 600;
+}
+
+.close-button {
+  display: block;
+  margin: 0 auto;
+  padding: 10px 25px;
+  background-color: #007bff;
+  color: white;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.close-button:hover {
+  background-color: #0056b3;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .modal-content {
+    padding: 15px 20px;
+  }
+  .history-table th,
+  .history-table td {
+    padding: 8px 10px;
+  }
+  .modal-content h2 {
+    font-size: 1.4rem;
+  }
+}
