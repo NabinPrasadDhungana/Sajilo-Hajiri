@@ -10,6 +10,7 @@ import Login from './components/Login/Login';
 import Dashboard from "./components/Dashboard"; // picks up index.jsx automatically
 import StudentHistoryModal from "./components/Dashboard/StudentHistoryModal";
 import Footer from "./components/Footer/Footer";
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 export default function App() {
   const [selectedStudent, setSelectedStudent] = useState(null);
