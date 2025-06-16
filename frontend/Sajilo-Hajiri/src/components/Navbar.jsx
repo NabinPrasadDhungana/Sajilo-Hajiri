@@ -3,7 +3,6 @@ import {
     
   Link,
 } from "react-router-dom";
-
 export default function Navbar() {
   return (
     <>
@@ -29,7 +28,7 @@ export default function Navbar() {
           </Link>
         </li>
          <li className="nav-item">
-          <Link  className="btn btn-primary my-3 mx-3" to="/Register">
+          <Link  className="btn btn-primary my-3 mx-3" to="/Dashboard">
             Dashboard
           </Link>
         </li>
@@ -39,14 +38,14 @@ export default function Navbar() {
           </Link>
         </li>
         <li className="nav-item">
-          <Link  className="btn btn-primary my-3 mx-3" to="/Register">
-            Logout
+          <Link  className="btn btn-primary my-3 mx-3" to="/Login">
+            Login
           </Link>
         </li>
 
          <li className="nav-item">
           <Link  className="btn btn-primary my-3 mx-3" to="/Register">
-            Login
+            Logout
           </Link>
         </li>
         
