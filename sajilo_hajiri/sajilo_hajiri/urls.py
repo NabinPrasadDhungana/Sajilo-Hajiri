@@ -22,7 +22,7 @@ from faceapp.views import admin_approve_user, admin_unapprove_user, admin_declin
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-     path('users/<int:user_id>/approve/', admin_approve_user),
+    path('users/<int:user_id>/approve/', admin_approve_user),
     path('users/<int:user_id>/unapprove/', admin_unapprove_user),
     path('users/<int:user_id>/decline/', admin_decline_user),
 ]
