@@ -8,9 +8,19 @@ class User(AbstractUser):
         ('teacher', 'Teacher'),
         ('student', 'Student'),
     ]
+    APPROVAL_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('unapproved', 'Unapproved'),
+    ]
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
-    avatar_url = models.URLField(blank=True, null=True)
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     name = models.CharField(max_length=150, blank=True, null=True)
+    approval_status = models.CharField(max_length=15, choices=APPROVAL_CHOICES, default='pending')
+    feedback = models.TextField(blank=True, null=True)  # feedback if unapproved
+    roll_number = models.PositiveIntegerField(blank=True, null=True)
+
+
 
     def __str__(self):
         return self.name or self.username
@@ -52,7 +62,7 @@ class ClassSubject(models.Model):
 class StudentClassEnrollment(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'role': 'student'})
     enrolled_class = models.ForeignKey(Class, on_delete=models.CASCADE)
-    roll_number = models.PositiveIntegerField()
+    # roll_number = models.PositiveIntegerField()
 
     class Meta:
         unique_together = ('enrolled_class', 'roll_number')  # Ensures roll_number is unique per class
