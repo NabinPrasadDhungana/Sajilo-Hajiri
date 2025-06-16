@@ -4,6 +4,8 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Navbar from './components/Navbar';
 import Home from './components/Home';
 import Register from './components/Register';
+import Login from './components/Login/Login';
+
 
 import Dashboard from "./components/Dashboard"; // picks up index.jsx automatically
 import StudentHistoryModal from "./components/Dashboard/StudentHistoryModal";
@@ -25,6 +27,8 @@ export default function App() {
       <Navbar />
       <Routes>
         <Route exact path="/" element={<Home />} />
+        <Route path="/Login" element={<Login />} />
+
         <Route exact path="/register" element={<Register showAlert={(msg, type) => alert(`${msg}`)} />} />
         
         {/* Add a route for the dashboard */}
