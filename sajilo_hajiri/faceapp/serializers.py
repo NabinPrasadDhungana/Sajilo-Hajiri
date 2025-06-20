@@ -5,6 +5,8 @@ from .models import (
     FaceEncoding
 )
 
+# Model Serializers
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -54,3 +56,36 @@ class FaceEncodingSerializer(serializers.ModelSerializer):
     class Meta:
         model = FaceEncoding
         fields = '__all__'
+
+
+# Other Serializers
+
+class UserRegistrationSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'password', 'role', 'avatar', 'name']
+
+    def create(self, validated_data):
+        user = User.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data['email'],
+            role=validated_data['role'],
+            avatar=validated_data.get('avatar'),
+            name=validated_data.get('name'),
+            password=validated_data['password']
+        )
+        user.approval_status = 'pending'
+        user.save()
+        return user
+
+class UserLoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField()
+
+class AdminUserReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'approval_status', 'feedback']
+ 
