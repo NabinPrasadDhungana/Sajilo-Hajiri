@@ -1,3 +1,4 @@
+// App.jsx
 import React, { useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
@@ -6,16 +7,15 @@ import Home from './components/Home';
 import Register from './components/Register';
 import Login from './components/Login/Login';
 import AdminPanel from './components/AdminPanel';
-
-import Dashboard from "./components/Dashboard"; // picks up index.jsx automatically
+import Dashboard from "./components/Dashboard";
 import StudentHistoryModal from "./components/Dashboard/StudentHistoryModal";
 import Footer from "./components/Footer/Footer";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 export default function App() {
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [notifications, setNotifications] = useState([]);
 
-  // Simulated users data (students and teachers)
   const [users, setUsers] = useState([
     {
       email: "student1@example.com",
@@ -41,36 +41,54 @@ export default function App() {
     setSelectedStudent(null);
   };
 
-  // Admin functions to update user status & notifications
   const approveUser = (email) => {
     setUsers((prev) =>
       prev.map((u) =>
-        u.email === email
-          ? { ...u, status: "approved", notification: "You are approved!" }
-          : u
+        u.email === email ? { ...u, status: "approved", notification: "You are approved!" } : u
       )
     );
+    const user = users.find((u) => u.email === email);
+    if (user) {
+      setNotifications((prev) => [
+        ...prev,
+        `${user.fullName} (${user.role}) has been approved.`
+      ]);
+    }
   };
 
   const unapproveUser = (email) => {
     setUsers((prev) =>
       prev.map((u) =>
-        u.email === email
-          ? { ...u, status: "unapproved", notification: "You are unapproved." }
-          : u
+        u.email === email ? { ...u, status: "unapproved", notification: "You are unapproved." } : u
       )
     );
+    const user = users.find((u) => u.email === email);
+    if (user) {
+      setNotifications((prev) => [
+        ...prev,
+        `${user.fullName} (${user.role}) has been unapproved.`
+      ]);
+    }
   };
 
   const sendFeedback = (email, message) => {
     setUsers((prev) =>
-      prev.map((u) => (u.email === email ? { ...u, notification: message } : u))
+      prev.map((u) =>
+        u.email === email ? { ...u, notification: message } : u
+      )
     );
+    const user = users.find((u) => u.email === email);
+    if (user) {
+      setNotifications((prev) => [
+        ...prev,
+        `Feedback sent to ${user.fullName}: "${message}"`
+      ]);
+    }
   };
 
   return (
     <BrowserRouter>
-      <Navbar />
+      <Navbar notifications={notifications} />
       <Routes>
         <Route exact path="/" element={<Home />} />
         <Route path="/Login" element={<Login />} />
@@ -79,7 +97,6 @@ export default function App() {
           path="/register"
           element={<Register showAlert={(msg, type) => alert(`${msg}`)} />}
         />
-
         <Route
           exact
           path="/dashboard"
@@ -92,8 +109,6 @@ export default function App() {
             </>
           }
         />
-
-        {/* Admin Panel Route */}
         <Route
           exact
           path="/admin"
