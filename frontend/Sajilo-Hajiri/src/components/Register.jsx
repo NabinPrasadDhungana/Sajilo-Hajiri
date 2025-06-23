@@ -15,63 +15,22 @@ const Register = (props) => {
   const [department, setDepartment] = useState('');
   const [role, setRole] = useState('student');
   const [collegeRoll, setCollegeRoll] = useState('');
+
   const [semesterError, setSemesterError] = useState('');
   const [sectionError, setSectionError] = useState('');
   const [departmentError, setDepartmentError] = useState('');
   const [roleError, setRoleError] = useState('');
   const [collegeRollError, setCollegeRollError] = useState('');
 
-  const handleFullNameChange = (e) => {
-    setFullName(e.target.value);
-    setFullNameError('');
-    setError('');
-  };
+  const isTeacher = role === 'teacher';
 
-  const handleEmailChange = (e) => {
-    setEmail(e.target.value);
-    setEmailError('');
-    setError('');
-  };
-
-  const handleSemesterChange = (e) => {
-    setSemester(e.target.value);
-    setSemesterError('');
-    setError('');
-  };
-
-  const handleSectionChange = (e) => {
-    setSection(e.target.value);
-    setSectionError('');
-    setError('');
-  };
-
-  const handleDepartmentChange = (e) => {
-    setDepartment(e.target.value);
-    setDepartmentError('');
-    setError('');
-  };
-
-  const handleRoleChange = (e) => {
-    setRole(e.target.value);
-    setRoleError('');
-    setError('');
-  };
-
-  const handleCollegeRollChange = (e) => {
-    setCollegeRoll(e.target.value);
-    setCollegeRollError('');
-    setError('');
-  };
+  const isValidEmail = (email) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handlePhotoCapture = (image) => {
     setPhoto(image);
     setIsWebcamOpen(false);
     setError('');
-  };
-
-  const isValidEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
   };
 
   const handleSubmit = () => {
@@ -87,34 +46,27 @@ const Register = (props) => {
       return;
     }
 
-    if (semester.trim() === '') {
-      setSemesterError('Semester is required.');
-      setError('Please fill in all required fields.');
-      return;
-    }
-
-    if (section.trim() === '') {
-      setSectionError('Section is required.');
-      setError('Please fill in all required fields.');
-      return;
-    }
-
-    if (department.trim() === '') {
-      setDepartmentError('Department is required.');
-      setError('Please fill in all required fields.');
-      return;
-    }
-
-    if (role.trim() === '') {
-      setRoleError('Role is required.');
-      setError('Please fill in all required fields.');
-      return;
-    }
-
-    if (role === 'student' && collegeRoll.trim() === '') {
-      setCollegeRollError('College Roll Number is required for students.');
-      setError('Please fill in all required fields.');
-      return;
+    if (!isTeacher) {
+      if (semester.trim() === '') {
+        setSemesterError('Semester is required.');
+        setError('Please fill in all required fields.');
+        return;
+      }
+      if (section.trim() === '') {
+        setSectionError('Section is required.');
+        setError('Please fill in all required fields.');
+        return;
+      }
+      if (department.trim() === '') {
+        setDepartmentError('Department is required.');
+        setError('Please fill in all required fields.');
+        return;
+      }
+      if (collegeRoll.trim() === '') {
+        setCollegeRollError('College Roll Number is required for students.');
+        setError('Please fill in all required fields.');
+        return;
+      }
     }
 
     if (!photo) {
@@ -125,13 +77,13 @@ const Register = (props) => {
     setError('');
     props.showAlert("Form Submitted Successfully", "success");
 
-    console.log("Form Data:", {
+    console.log({
       fullName,
       email,
+      role,
       semester,
       section,
       department,
-      role,
       collegeRoll,
       photo,
     });
@@ -151,7 +103,7 @@ const Register = (props) => {
             type="email"
             className={`form-control ${emailError ? 'is-invalid' : ''}`}
             id="emailInput"
-            onChange={handleEmailChange}
+            onChange={(e) => { setEmail(e.target.value); setEmailError(''); setError(''); }}
             required
           />
           {emailError && <div className="invalid-feedback">{emailError}</div>}
@@ -164,7 +116,7 @@ const Register = (props) => {
             type="text"
             className={`form-control ${fullNameError ? 'is-invalid' : ''}`}
             id="fullNameInput"
-            onChange={handleFullNameChange}
+            onChange={(e) => { setFullName(e.target.value); setFullNameError(''); setError(''); }}
             required
             style={{
               backgroundColor: props.mode === 'dark' ? 'black' : 'white',
@@ -174,56 +126,6 @@ const Register = (props) => {
           {fullNameError && <div className="invalid-feedback">{fullNameError}</div>}
         </div>
 
-        {/* Semester */}
-        <div className="my-3">
-          <label className="form-label">Semester</label>
-          <select
-            className={`form-select ${semesterError ? 'is-invalid' : ''}`}
-            value={semester}
-            onChange={handleSemesterChange}
-          >
-            <option value="">Select Semester</option>
-            {[...Array(8)].map((_, i) => (
-              <option key={i + 1} value={`Semester ${i + 1}`}>Semester {i + 1}</option>
-            ))}
-          </select>
-          {semesterError && <div className="invalid-feedback">{semesterError}</div>}
-        </div>
-
-        {/* Section */}
-        <div className="my-3">
-          <label className="form-label">Section</label>
-          <select
-            className={`form-select ${sectionError ? 'is-invalid' : ''}`}
-            value={section}
-            onChange={handleSectionChange}
-          >
-            <option value="">Select Section</option>
-            <option value="Morning">Morning</option>
-            <option value="Day">Day</option>
-          </select>
-          {sectionError && <div className="invalid-feedback">{sectionError}</div>}
-        </div>
-
-        {/* Department */}
-        <div className="my-3">
-          <label className="form-label">Department</label>
-          <select
-            className={`form-select ${departmentError ? 'is-invalid' : ''}`}
-            value={department}
-            onChange={handleDepartmentChange}
-          >
-            <option value="">Select Department</option>
-            <option value="IT">IT</option>
-            <option value="CE">CE</option>
-            <option value="SE">SE</option>
-            <option value="BCA">BCA</option>
-            <option value="CIVIL">CIVIL</option>
-            <option value="BEEE">BEEE</option>
-          </select>
-          {departmentError && <div className="invalid-feedback">{departmentError}</div>}
-        </div>
-
         {/* Role */}
         <div className="my-3">
           <label htmlFor="roleSelect" className="form-label">Role</label>
@@ -231,7 +133,7 @@ const Register = (props) => {
             id="roleSelect"
             className={`form-select ${roleError ? 'is-invalid' : ''}`}
             value={role}
-            onChange={handleRoleChange}
+            onChange={(e) => { setRole(e.target.value); setRoleError(''); setError(''); }}
             required
           >
             <option value="student">Student</option>
@@ -240,20 +142,73 @@ const Register = (props) => {
           {roleError && <div className="invalid-feedback">{roleError}</div>}
         </div>
 
-        {/* College Roll Number – Only for Students */}
-        {role === 'student' && (
-          <div className="my-3">
-            <label htmlFor="collegeRollInput" className="form-label">College Roll Number</label>
-            <input
-              type="text"
-              className={`form-control ${collegeRollError ? 'is-invalid' : ''}`}
-              id="collegeRollInput"
-              onChange={handleCollegeRollChange}
-              required
-              placeholder="e.g., 221506"
-            />
-            {collegeRollError && <div className="invalid-feedback">{collegeRollError}</div>}
-          </div>
+        {/* These fields are for STUDENTS only */}
+        {!isTeacher && (
+          <>
+            {/* Semester */}
+            <div className="my-3">
+              <label className="form-label">Semester</label>
+              <select
+                className={`form-select ${semesterError ? 'is-invalid' : ''}`}
+                value={semester}
+                onChange={(e) => { setSemester(e.target.value); setSemesterError(''); setError(''); }}
+              >
+                <option value="">Select Semester</option>
+                {[...Array(8)].map((_, i) => (
+                  <option key={i + 1} value={`Semester ${i + 1}`}>Semester {i + 1}</option>
+                ))}
+              </select>
+              {semesterError && <div className="invalid-feedback">{semesterError}</div>}
+            </div>
+
+            {/* Section */}
+            <div className="my-3">
+              <label className="form-label">Section</label>
+              <select
+                className={`form-select ${sectionError ? 'is-invalid' : ''}`}
+                value={section}
+                onChange={(e) => { setSection(e.target.value); setSectionError(''); setError(''); }}
+              >
+                <option value="">Select Section</option>
+                <option value="Morning">Morning</option>
+                <option value="Day">Day</option>
+              </select>
+              {sectionError && <div className="invalid-feedback">{sectionError}</div>}
+            </div>
+
+            {/* Department */}
+            <div className="my-3">
+              <label className="form-label">Department</label>
+              <select
+                className={`form-select ${departmentError ? 'is-invalid' : ''}`}
+                value={department}
+                onChange={(e) => { setDepartment(e.target.value); setDepartmentError(''); setError(''); }}
+              >
+                <option value="">Select Department</option>
+                <option value="IT">IT</option>
+                <option value="CE">CE</option>
+                <option value="SE">SE</option>
+                <option value="BCA">BCA</option>
+                <option value="CIVIL">CIVIL</option>
+                <option value="BEEE">BEEE</option>
+              </select>
+              {departmentError && <div className="invalid-feedback">{departmentError}</div>}
+            </div>
+
+            {/* College Roll Number */}
+            <div className="my-3">
+              <label htmlFor="collegeRollInput" className="form-label">College Roll Number</label>
+              <input
+                type="text"
+                className={`form-control ${collegeRollError ? 'is-invalid' : ''}`}
+                id="collegeRollInput"
+                onChange={(e) => { setCollegeRoll(e.target.value); setCollegeRollError(''); setError(''); }}
+                required
+                placeholder="e.g., 221506"
+              />
+              {collegeRollError && <div className="invalid-feedback">{collegeRollError}</div>}
+            </div>
+          </>
         )}
 
         {/* Photo Upload or Webcam Capture */}
@@ -289,9 +244,7 @@ const Register = (props) => {
                   const file = e.target.files[0];
                   if (file) {
                     const reader = new FileReader();
-                    reader.onloadend = () => {
-                      setPhoto(reader.result);
-                    };
+                    reader.onloadend = () => setPhoto(reader.result);
                     reader.readAsDataURL(file);
                   }
                 }}
@@ -322,11 +275,7 @@ const Register = (props) => {
               <button
                 type="button"
                 className="btn btn-sm btn-danger mt-2"
-                onClick={() => {
-                  if (window.confirm("Remove this photo?")) {
-                    setPhoto(null);
-                  }
-                }}
+                onClick={() => window.confirm("Remove this photo?") && setPhoto(null)}
               >
                 ❌ Remove
               </button>

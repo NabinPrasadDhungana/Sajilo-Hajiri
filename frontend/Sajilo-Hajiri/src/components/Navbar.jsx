@@ -1,12 +1,14 @@
-// components/Navbar.jsx
-import React from 'react';
-import { Link } from "react-router-dom";
-import NotificationBell from "./NotificationBell";
+import React from "react";
+import { NavLink } from "react-router-dom";
 
-export default function Navbar({ notifications }) {
+const Navbar = () => {
   return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-primary fixed-top">
-      <div className="container-fluid">
+    <nav className="navbar navbar-expand-lg shadow-sm fixed-top">
+      <div className="container-fluid d-flex justify-content-between align-items-center px-4">
+        <NavLink className="navbar-brand" to="/">
+          Sajilo Hajiri
+        </NavLink>
+
         <button
           className="navbar-toggler"
           type="button"
@@ -16,31 +18,29 @@ export default function Navbar({ notifications }) {
           <span className="navbar-toggler-icon" />
         </button>
 
-        <div className="collapse navbar-collapse" id="navbarNav">
-          <ul className="navbar-nav">
+        <div className="collapse navbar-collapse justify-content-end" id="navbarNav">
+          <ul className="navbar-nav align-items-center">
             <li className="nav-item">
-              <Link className="btn btn-primary my-3 mx-3" to="/">Home</Link>
+              <NavLink exact className="nav-link" to="/">
+                Home
+              </NavLink>
             </li>
             <li className="nav-item">
-              <Link className="btn btn-primary my-3 mx-3" to="/Dashboard">Dashboard</Link>
+              <NavLink className="nav-link" to="/login">
+                Login
+              </NavLink>
             </li>
             <li className="nav-item">
-              <Link className="btn btn-primary my-3 mx-3" to="/Register">Register Now</Link>
-            </li>
-            <li className="nav-item">
-              <Link className="btn btn-primary my-3 mx-3" to="/Login">Login</Link>
-            </li>
-            <li className="nav-item">
-              <Link className="btn btn-primary my-3 mx-3" to="/Register">Logout</Link>
+              <NavLink className="nav-link" to="/register">
+                Register
+              </NavLink>
+              
             </li>
           </ul>
-        </div>
-
-        {/* Notifications bell */}
-        <div className="d-flex align-items-center ms-auto me-3">
-          <NotificationBell notifications={notifications} />
         </div>
       </div>
     </nav>
   );
-}
+};
+
+export default Navbar;
