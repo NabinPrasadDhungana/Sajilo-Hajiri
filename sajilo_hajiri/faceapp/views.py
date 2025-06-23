@@ -77,6 +77,7 @@ class LoginView(APIView):
                             'username': user.username,
                             'role': user.role,
                             'name': user.name,
+                            'roll_number': user.roll_number,
                             'avatar': user.avatar.url if user.avatar else None
                         }
                     })

@@ -9,7 +9,7 @@ const Register = (props) => {
   const [fullNameError, setFullNameError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [isWebcamOpen, setIsWebcamOpen] = useState(false);
-
+  
   const [semester, setSemester] = useState('');
   const [section, setSection] = useState('');
   const [department, setDepartment] = useState('');
@@ -20,6 +20,7 @@ const Register = (props) => {
   const [departmentError, setDepartmentError] = useState('');
   const [roleError, setRoleError] = useState('');
   const [collegeRollError, setCollegeRollError] = useState('');
+  const [message, setMessage] = useState('');
 
   const handleFullNameChange = (e) => {
     setFullName(e.target.value);
@@ -74,70 +75,89 @@ const Register = (props) => {
     return emailRegex.test(email);
   };
 
-  const handleSubmit = () => {
-    if (fullName.trim() === '') {
-      setFullNameError('Full Name is required.');
-      setError('Please fill in all required fields.');
-      return;
+  const handleSubmit = async () => {
+  // Validations (unchanged)
+  if (fullName.trim() === '') {
+    setFullNameError('Full Name is required.');
+    setError('Please fill in all required fields.');
+    return;
+  }
+  if (!isValidEmail(email)) {
+    setEmailError('Please enter a valid email address.');
+    setError('Please fill in all required fields.');
+    return;
+  }
+  if (semester.trim() === '') {
+    setSemesterError('Semester is required.');
+    setError('Please fill in all required fields.');
+    return;
+  }
+  if (section.trim() === '') {
+    setSectionError('Section is required.');
+    setError('Please fill in all required fields.');
+    return;
+  }
+  if (department.trim() === '') {
+    setDepartmentError('Department is required.');
+    setError('Please fill in all required fields.');
+    return;
+  }
+  if (role.trim() === '') {
+    setRoleError('Role is required.');
+    setError('Please fill in all required fields.');
+    return;
+  }
+  if (role === 'student' && collegeRoll.trim() === '') {
+    setCollegeRollError('College Roll Number is required for students.');
+    setError('Please fill in all required fields.');
+    return;
+  }
+  if (!photo) {
+    setError('Please upload or capture a photo.');
+    return;
+  }
+
+  setError('');
+
+  try {
+    const formData = new FormData();
+    formData.append('name', fullName);
+    formData.append('email', email);
+    formData.append('username', email); // assuming username is email
+    formData.append('password', 'temporary123'); // or generate a password
+    formData.append('role', role);
+    if (role === 'student') {
+      formData.append('roll_number', collegeRoll);
     }
 
-    if (!isValidEmail(email)) {
-      setEmailError('Please enter a valid email address.');
-      setError('Please fill in all required fields.');
-      return;
-    }
+    // Convert base64 image to file
+    const blob = await (await fetch(photo)).blob();
+    const filename = `photo_${Date.now()}.jpg`;
+    const file = new File([blob], filename, { type: blob.type });
+    formData.append('avatar', file);
 
-    if (semester.trim() === '') {
-      setSemesterError('Semester is required.');
-      setError('Please fill in all required fields.');
-      return;
-    }
-
-    if (section.trim() === '') {
-      setSectionError('Section is required.');
-      setError('Please fill in all required fields.');
-      return;
-    }
-
-    if (department.trim() === '') {
-      setDepartmentError('Department is required.');
-      setError('Please fill in all required fields.');
-      return;
-    }
-
-    if (role.trim() === '') {
-      setRoleError('Role is required.');
-      setError('Please fill in all required fields.');
-      return;
-    }
-
-    if (role === 'student' && collegeRoll.trim() === '') {
-      setCollegeRollError('College Roll Number is required for students.');
-      setError('Please fill in all required fields.');
-      return;
-    }
-
-    if (!photo) {
-      setError('Please upload or capture a photo.');
-      return;
-    }
-
-    setError('');
-    props.showAlert("Form Submitted Successfully", "success");
-
-    console.log("Form Data:", {
-      fullName,
-      email,
-      semester,
-      section,
-      department,
-      role,
-      collegeRoll,
-      photo,
+    // Send request
+    const res = await fetch('http://127.0.0.1:8000/api/register/', {
+      method: 'POST',
+      body: formData,
     });
 
-    // TODO: Send to backend
-  };
+    const data = await res.json();
+    if (res.ok) {
+      setMessage('✅ User registered successfully and is pending approval');
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1500); // Delay for user to see message
+
+    } else {
+      setError(data?.error || 'Registration failed. Check fields or try again.');
+    }
+  } catch (err) {
+    console.error('Registration error:', err);
+    setError('Something went wrong. Please try again later.');
+  }
+};
+
 
   return (
     <div className="total" style={{ marginLeft: '10px' }}>
@@ -337,6 +357,7 @@ const Register = (props) => {
         <button type="button" className="btn btn-primary" onClick={handleSubmit}>
           Submit
         </button>
+        {message && <div className="alert alert-success mt-3">{message}</div>}
         {error && <div className="alert alert-danger mt-3">{error}</div>}
       </form>
     </div>
