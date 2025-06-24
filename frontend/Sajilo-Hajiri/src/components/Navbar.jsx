@@ -21,20 +21,28 @@ const Navbar = () => {
         <div className="collapse navbar-collapse justify-content-end" id="navbarNav">
           <ul className="navbar-nav align-items-center">
             <li className="nav-item">
-              <NavLink exact className="nav-link" to="/">
+              <NavLink
+                to="/"
+                className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+              >
                 Home
               </NavLink>
             </li>
             <li className="nav-item">
-              <NavLink className="nav-link" to="/login">
+              <NavLink
+                to="/login"
+                className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+              >
                 Login
               </NavLink>
             </li>
             <li className="nav-item">
-              <NavLink className="nav-link" to="/register">
+              <NavLink
+                to="/register"
+                className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+              >
                 Register
               </NavLink>
-              
             </li>
           </ul>
         </div>
