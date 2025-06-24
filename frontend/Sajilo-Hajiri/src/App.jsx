@@ -1,5 +1,6 @@
 // App.jsx
 import React, { useState } from "react";
+import { useEffect } from 'react';
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import Navbar from './components/Navbar';
@@ -12,9 +13,19 @@ import StudentHistoryModal from "./components/Dashboard/StudentHistoryModal";
 import Footer from "./components/Footer/Footer";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
+
+
 export default function App() {
+  const [currentUser, setCurrentUser] = useState(null);
+  
+  useEffect(() => {
+    fetch("/api/csrf/", {
+      credentials: "include",
+    });
+  }, []);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [notifications, setNotifications] = useState([]);
+
 
   const [users, setUsers] = useState([
     {
@@ -91,13 +102,17 @@ export default function App() {
       <Navbar notifications={notifications} />
       <Routes>
         <Route exact path="/" element={<Home />} />
-        <Route path="/Login" element={<Login />} />
+        {/* <Route path="/Login" element={<Login />} /> */}
         <Route
           exact
           path="/register"
           element={<Register showAlert={(msg, type) => alert(`${msg}`)} />}
         />
-        <Route
+        <Route path="/Login" element={<Login setCurrentUser={setCurrentUser} />} />
+
+        <Route path="/dashboard" element={<Dashboard userRole={currentUser?.role} />} />
+
+        {/* <Route
           exact
           path="/dashboard"
           element={
@@ -108,7 +123,7 @@ export default function App() {
               )}
             </>
           }
-        />
+        /> */}
         <Route
           exact
           path="/admin"

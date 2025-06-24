@@ -1,16 +1,20 @@
 import React, { useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import "./Login.css";
+import Cookies from "js-cookie";
 
-export default function Login() {
+export default function Login({ setCurrentUser }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const validateEmail = (email) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleSubmit = async (e) => {
+    const csrfToken = Cookies.get("csrftoken");
     e.preventDefault();
     setMessage("");
 
@@ -30,10 +34,12 @@ export default function Login() {
     try {
       setLoading(true);
 
-      const res = await fetch("http://127.0.0.1:8000/api/login/", {
+      const res = await fetch("/api/login/", {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
         },
         body: JSON.stringify({
           username: email,
@@ -44,9 +50,9 @@ export default function Login() {
       const data = await res.json();
 
       if (res.ok) {
-        setMessage("✅ Logged in successfully");
+        setCurrentUser(data.user); // <- this stores user in App
         setTimeout(() => {
-          window.location.href = '/dashboard';
+          navigate('/dashboard');
         }, 1500); // Adjust delay if needed
 
 
