@@ -9,6 +9,12 @@ const Register = (props) => {
   const [fullNameError, setFullNameError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [isWebcamOpen, setIsWebcamOpen] = useState(false);
+  
+  // Password states
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
   const [semester, setSemester] = useState('');
   const [section, setSection] = useState('');
@@ -27,6 +33,12 @@ const Register = (props) => {
   const isValidEmail = (email) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
+  const validatePassword = (pass) => {
+    // Minimum 8 characters, at least one uppercase, one lowercase, one number and one special character
+    const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return re.test(pass);
+  };
+
   const handlePhotoCapture = (image) => {
     setPhoto(image);
     setIsWebcamOpen(false);
@@ -34,52 +46,76 @@ const Register = (props) => {
   };
 
   const handleSubmit = () => {
+    // Reset all errors
+    setError('');
+    setFullNameError('');
+    setEmailError('');
+    setPasswordError('');
+    setConfirmPasswordError('');
+    setSemesterError('');
+    setSectionError('');
+    setDepartmentError('');
+    setRoleError('');
+    setCollegeRollError('');
+
+    // Validate all fields
+    let isValid = true;
+
     if (fullName.trim() === '') {
       setFullNameError('Full Name is required.');
-      setError('Please fill in all required fields.');
-      return;
+      isValid = false;
     }
 
     if (!isValidEmail(email)) {
       setEmailError('Please enter a valid email address.');
-      setError('Please fill in all required fields.');
-      return;
+      isValid = false;
+    }
+
+    if (!validatePassword(password)) {
+      setPasswordError('Password must be at least 8 characters with uppercase, lowercase, number, and special character.');
+      isValid = false;
+    }
+
+    if (password !== confirmPassword) {
+      setConfirmPasswordError('Passwords do not match.');
+      isValid = false;
     }
 
     if (!isTeacher) {
       if (semester.trim() === '') {
         setSemesterError('Semester is required.');
-        setError('Please fill in all required fields.');
-        return;
+        isValid = false;
       }
       if (section.trim() === '') {
         setSectionError('Section is required.');
-        setError('Please fill in all required fields.');
-        return;
+        isValid = false;
       }
       if (department.trim() === '') {
         setDepartmentError('Department is required.');
-        setError('Please fill in all required fields.');
-        return;
+        isValid = false;
       }
       if (collegeRoll.trim() === '') {
         setCollegeRollError('College Roll Number is required for students.');
-        setError('Please fill in all required fields.');
-        return;
+        isValid = false;
       }
     }
 
     if (!photo) {
       setError('Please upload or capture a photo.');
+      isValid = false;
+    }
+
+    if (!isValid) {
+      setError('Please fill in all required fields correctly.');
       return;
     }
 
-    setError('');
     props.showAlert("Form Submitted Successfully", "success");
 
     console.log({
       fullName,
       email,
+      password,
       role,
       semester,
       section,
@@ -124,6 +160,45 @@ const Register = (props) => {
             }}
           />
           {fullNameError && <div className="invalid-feedback">{fullNameError}</div>}
+        </div>
+
+        {/* Password */}
+        <div className="my-3">
+          <label htmlFor="passwordInput" className="form-label">Password</label>
+          <input
+            type="password"
+            className={`form-control ${passwordError ? 'is-invalid' : ''}`}
+            id="passwordInput"
+            value={password}
+            onChange={(e) => { 
+              setPassword(e.target.value); 
+              setPasswordError(''); 
+              setError(''); 
+            }}
+            required
+          />
+          {passwordError && <div className="invalid-feedback">{passwordError}</div>}
+          <div className="form-text">
+            Password must contain at least 8 characters, including uppercase, lowercase, number, and special character.
+          </div>
+        </div>
+
+        {/* Confirm Password */}
+        <div className="my-3">
+          <label htmlFor="confirmPasswordInput" className="form-label">Confirm Password</label>
+          <input
+            type="password"
+            className={`form-control ${confirmPasswordError ? 'is-invalid' : ''}`}
+            id="confirmPasswordInput"
+            value={confirmPassword}
+            onChange={(e) => { 
+              setConfirmPassword(e.target.value); 
+              setConfirmPasswordError(''); 
+              setError(''); 
+            }}
+            required
+          />
+          {confirmPasswordError && <div className="invalid-feedback">{confirmPasswordError}</div>}
         </div>
 
         {/* Role */}
