@@ -75,3 +75,4 @@ export default function Dashboard({ onStudentClick }) {
     </div>
   );
 }
+// student.id – Domain name for sale
