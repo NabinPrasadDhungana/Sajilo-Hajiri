@@ -10,6 +10,7 @@ from .serializers import UserRegistrationSerializer, UserLoginSerializer, AdminU
 import os
 from django.db.models import Prefetch
 from django.utils.timezone import localtime
+from rest_framework.permissions import AllowAny
 
 from .permissions import IsCustomAdmin 
 
@@ -17,7 +18,7 @@ from .permissions import IsCustomAdmin
 from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
-
+from django.middleware.csrf import get_token
 # @api_view(['POST'])
 # @permission_classes([IsAuthenticated])
 # def admin_approve_user(request, user_id):
@@ -66,20 +67,30 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 #         return Response({'error': 'User not found.'}, status=404)
 
 class RegisterUserView(APIView):
+    @method_decorator(ensure_csrf_cookie)
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response({'message': 'User registered successfully and is pending approval'}, status=status.HTTP_201_CREATED)
+            return Response(
+                {'message': 'User registered successfully and is pending approval'}, 
+                status=status.HTTP_201_CREATED
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class LoginView(APIView):
+    @method_decorator(ensure_csrf_cookie)
     def post(self, request):
         serializer = UserLoginSerializer(data=request.data)
         if serializer.is_valid():
-            user = authenticate(username=serializer.validated_data['username'], password=serializer.validated_data['password'])
+            user = authenticate(
+                username=serializer.validated_data['username'],
+                password=serializer.validated_data['password']
+            )
             if user:
                 if user.approval_status == 'approved':
+                    # Set session cookie
+                    request.session['user_id'] = user.id
                     return Response({
                         'message': 'Login successful',
                         'user': {
@@ -92,14 +103,41 @@ class LoginView(APIView):
                         }
                     })
                 else:
-                    return Response({'error': 'Your account is not approved yet.'}, status=status.HTTP_403_FORBIDDEN)
-            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+                    return Response(
+                        {'error': 'Your account is not approved yet.'}, 
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+            return Response(
+                {'error': 'Invalid credentials'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-@method_decorator(ensure_csrf_cookie, name='dispatch')
+
 class CSRFTokenView(APIView):
+    @method_decorator(ensure_csrf_cookie)
     def get(self, request):
-        return JsonResponse({'message': 'CSRF cookie set'})
+        # Explicitly get and set CSRF token
+        csrf_token = get_token(request)
+        response = JsonResponse({'message': 'CSRF cookie set', 'csrfToken': csrf_token})
+        response.set_cookie(
+            'csrftoken',
+            csrf_token,
+            max_age=60 * 60 * 24 * 7,  # 1 week
+            httponly=False,
+            samesite='Lax',
+            secure=True if request.is_secure() else False
+        )
+        return response
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # Clear session and CSRF cookie
+        request.session.flush()
+        response = Response({'message': 'Logged out successfully'})
+        response.delete_cookie('csrftoken')
+        return response
 
 
 class AdminReviewUserView(APIView):
@@ -135,69 +173,60 @@ class DashboardAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        # Simply return all possible dashboard data
+        # Let the frontend decide which parts to use based on user role
         user = request.user
+        data = {
+            "user": UserSerializer(user).data,
+            "student_data": self._get_student_data(user) if user.role == 'student' else None,
+            "teacher_data": self._get_teacher_data(user) if user.role == 'teacher' else None,
+            "admin_data": self._get_admin_data(user) if user.role == 'admin' else None,
+        }
+        return Response(data)
 
-        if user.role == 'student':
-            return self._student_dashboard(user)
-
-        elif user.role == 'teacher':
-            return self._teacher_dashboard(user)
-
-        elif user.role == 'admin':
-            return self._admin_dashboard(user)
-
-        return Response({"error": "Invalid role"}, status=400)
-
-    def _student_dashboard(self, user):
+    def _get_student_data(self, user):
         try:
             enrolled_class = StudentClassEnrollment.objects.get(student=user).enrolled_class
+            class_subjects = ClassSubject.objects.filter(class_instance=enrolled_class)
+            attendance = AttendanceRecord.objects.filter(student=user).order_by('-entry_time')[:20]
+
+            return {
+                "class": enrolled_class.name,
+                "subjects": SubjectSerializer([cs.subject for cs in class_subjects], many=True).data,
+                "attendance": AttendanceRecordSerializer(attendance, many=True).data,
+            }
         except StudentClassEnrollment.DoesNotExist:
-            return Response({"error": "Student is not enrolled in any class."}, status=404)
+            return {"error": "Student is not enrolled in any class."}
 
-        class_subjects = ClassSubject.objects.filter(class_instance=enrolled_class)
-        attendance = AttendanceRecord.objects.filter(student=user).order_by('-entry_time')[:20]
-
-        return Response({
-            "user": UserSerializer(user).data,
-            "class": enrolled_class.name,
-            "subjects": SubjectSerializer([cs.subject for cs in class_subjects], many=True).data,
-            "attendance": AttendanceRecordSerializer(attendance, many=True).data,
-        })
-
-    def _teacher_dashboard(self, user):
+    def _get_teacher_data(self, user):
         classes_teaching = ClassSubject.objects.filter(teacher=user).select_related('class_instance', 'subject')
-        response = []
+        return {
+            "teaching": [
+                {
+                    "class": cs.class_instance.name,
+                    "subject": cs.subject.name,
+                    "students": UserSerializer(
+                        User.objects.filter(
+                            studentclassenrollment__enrolled_class=cs.class_instance,
+                            role='student'
+                        ),
+                        many=True
+                    ).data
+                }
+                for cs in classes_teaching
+            ]
+        }
 
-        for cs in classes_teaching:
-            response.append({
-                "class": cs.class_instance.name,
-                "subject": cs.subject.name,
-                "students": UserSerializer(User.objects.filter(
-                    studentclassenrollment__enrolled_class=cs.class_instance,
-                    role='student'
-                ), many=True).data
-            })
-
-        return Response({
-            "user": UserSerializer(user).data,
-            "teaching": response
-        })
-
-    def _admin_dashboard(self, user):
+    def _get_admin_data(self, user):
         pending_users = User.objects.filter(approval_status='pending')
-        total_users = User.objects.count()
-        total_students = User.objects.filter(role='student').count()
-        total_teachers = User.objects.filter(role='teacher').count()
-
-        return Response({
-            "user": UserSerializer(user).data,
+        return {
             "stats": {
-                "total_users": total_users,
-                "total_students": total_students,
-                "total_teachers": total_teachers,
+                "total_users": User.objects.count(),
+                "total_students": User.objects.filter(role='student').count(),
+                "total_teachers": User.objects.filter(role='teacher').count(),
                 "pending_users": UserSerializer(pending_users, many=True).data,
             }
-        })
+        }
     
 class StudentAttendanceView(APIView):
     permission_classes = [IsAuthenticated]

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import WebcamCapture from './WebcamCapture';
+import getCSRFToken from '../Helper/Csrf_token';
+
 
 const Register = (props) => {
   const [fullName, setFullName] = useState('');
@@ -22,6 +24,9 @@ const Register = (props) => {
   const [roleError, setRoleError] = useState('');
   const [collegeRollError, setCollegeRollError] = useState('');
 
+  const [message, setMessage] = useState('');
+
+  
   const isTeacher = role === 'teacher';
 
   const isValidEmail = (email) =>
@@ -33,49 +38,92 @@ const Register = (props) => {
     setError('');
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    // Validations (unchanged)
+     const csrfToken = await getCSRFToken();
+
     if (fullName.trim() === '') {
       setFullNameError('Full Name is required.');
       setError('Please fill in all required fields.');
       return;
     }
-
     if (!isValidEmail(email)) {
       setEmailError('Please enter a valid email address.');
       setError('Please fill in all required fields.');
       return;
     }
-
-    if (!isTeacher) {
-      if (semester.trim() === '') {
-        setSemesterError('Semester is required.');
-        setError('Please fill in all required fields.');
-        return;
-      }
-      if (section.trim() === '') {
-        setSectionError('Section is required.');
-        setError('Please fill in all required fields.');
-        return;
-      }
-      if (department.trim() === '') {
-        setDepartmentError('Department is required.');
-        setError('Please fill in all required fields.');
-        return;
-      }
-      if (collegeRoll.trim() === '') {
-        setCollegeRollError('College Roll Number is required for students.');
-        setError('Please fill in all required fields.');
-        return;
-      }
+    if (semester.trim() === '') {
+      setSemesterError('Semester is required.');
+      setError('Please fill in all required fields.');
+      return;
     }
-
+    if (section.trim() === '') {
+      setSectionError('Section is required.');
+      setError('Please fill in all required fields.');
+      return;
+    }
+    if (department.trim() === '') {
+      setDepartmentError('Department is required.');
+      setError('Please fill in all required fields.');
+      return;
+    }
+    if (role.trim() === '') {
+      setRoleError('Role is required.');
+      setError('Please fill in all required fields.');
+      return;
+    }
+    if (role === 'student' && collegeRoll.trim() === '') {
+      setCollegeRollError('College Roll Number is required for students.');
+      setError('Please fill in all required fields.');
+      return;
+    }
     if (!photo) {
       setError('Please upload or capture a photo.');
       return;
     }
 
     setError('');
-    props.showAlert("Form Submitted Successfully", "success");
+
+    const formData = new FormData();
+    formData.append('email', email);
+    formData.append('username', email); // if you're using email as username
+    formData.append('name', fullName);
+    formData.append('role', role);
+    if (role === 'student') {
+      formData.append('roll_number', collegeRoll);
+    }
+    formData.append('password', 'default123'); // use a field or generate if needed
+
+    // Convert Base64 to Blob
+    const blob = await fetch(photo).then(res => res.blob());
+    formData.append('avatar', blob, 'photo.jpg');
+
+    try {
+      const response = await fetch('/api/register/', {
+         method: "POST",
+        credentials: "include",
+        headers: {
+          
+          "X-CSRFToken": csrfToken},
+        
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage('✅ User registered successfully and is pending approval');
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 1500);
+      } else {
+        console.error(data);
+        setError("Registration failed. Please check the inputs.");
+      }
+    } catch (error) {
+      console.error(error);
+      setError("Server error occurred.");
+    }
 
     console.log({
       fullName,
@@ -87,9 +135,10 @@ const Register = (props) => {
       collegeRoll,
       photo,
     });
-
+    
     // TODO: Send to backend
   };
+  
 
   return (
     <div className="total" style={{ marginLeft: '10px' }}>
@@ -286,6 +335,9 @@ const Register = (props) => {
         <button type="button" className="btn btn-primary" onClick={handleSubmit}>
           Submit
         </button>
+        
+        {message && <div className="alert alert-success mt-3">{message}</div>}
+
         {error && <div className="alert alert-danger mt-3">{error}</div>}
       </form>
     </div>
