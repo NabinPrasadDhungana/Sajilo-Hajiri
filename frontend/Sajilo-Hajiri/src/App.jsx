@@ -13,7 +13,11 @@ import Footer from "./components/Footer/Footer";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState(null);
+const [currentUser, setCurrentUser] = useState(() => {
+  const savedUser = localStorage.getItem("user");
+  return savedUser ? JSON.parse(savedUser) : null;
+});
+
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [notifications, setNotifications] = useState([]);
 
@@ -120,7 +124,7 @@ export default function App() {
         <Route exact path="/" element={<Home />} />
         <Route exact path="/register" element={<Register showAlert={(msg) => alert(`${msg}`)} />} />
         <Route path="/login" element={<Login setCurrentUser={setCurrentUser} />} />
-        <Route path="/dashboard" element={<Dashboard userRole={currentUser?.role} />} />
+        <Route path="/dashboard" element={<Dashboard user={currentUser} />} />
         <Route
           exact
           path="/admin"

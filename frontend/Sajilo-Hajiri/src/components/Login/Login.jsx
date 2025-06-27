@@ -14,7 +14,7 @@ const Login = ({ setCurrentUser }) => {
 
   // Ensure CSRF cookie is set
   useEffect(() => {
-    fetch('http://localhost:8000/api/csrf/', { 
+    fetch('/api/csrf/', { 
       credentials: 'include' 
     }).catch(err => {
       console.error('CSRF fetch error:', err);
@@ -35,7 +35,7 @@ const Login = ({ setCurrentUser }) => {
     setLoading(true);
 
     try {
-      const response = await authFetch('http://localhost:8000/api/login/', {
+      const response = await authFetch('/api/login/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

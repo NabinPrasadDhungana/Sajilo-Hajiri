@@ -10,7 +10,7 @@ from .models import (
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = '__all__'
+        fields = [ 'username', 'email', 'name', 'role', 'roll_number', 'avatar', ]
 
 class ClassSerializer(serializers.ModelSerializer):
     class Meta:
@@ -59,6 +59,14 @@ class FaceEncodingSerializer(serializers.ModelSerializer):
 
 
 # Other Serializers
+
+# serializers.py
+
+class TeachingClassSerializer(serializers.Serializer):
+    class_name = serializers.CharField()
+    subject_name = serializers.CharField()
+    students = UserSerializer(many=True)
+
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     class Meta:

@@ -1,9 +1,10 @@
 from django.urls import path
-from .views import RegisterUserView, LoginView, AdminReviewUserView, DashboardAPIView, CSRFTokenView, StudentAttendanceView
+from .views import RegisterUserView, LoginView, AdminReviewUserView, DashboardAPIView, CSRFTokenView, StudentAttendanceView, LogoutView
 
 urlpatterns = [
     path('register/', RegisterUserView.as_view(), name='register'),
     path('login/', LoginView.as_view(), name='login'),
+    path('logout/', LogoutView.as_view(), name='logout'),
     path('admin/review/<int:user_id>/', AdminReviewUserView.as_view(), name='admin-review'),
     path('dashboard/', DashboardAPIView.as_view(), name='dashboard'),
     path('csrf/', CSRFTokenView.as_view(), name='csrf'),
