@@ -1,87 +1,70 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import "./Login.css";
-import Cookies from "js-cookie";
 import { authFetch } from '../../Helper/Csrf_token';
+import './Login.css';
 
-
-export default function Login({ setCurrentUser }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+const Login = ({ setCurrentUser }) => {
+  const [formData, setFormData] = useState({
+    username: '',
+    password: ''
+  });
+  const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Pre-fetch CSRF token when component mounts
+  // Ensure CSRF cookie is set
   useEffect(() => {
-    fetch('/api/csrf/', { credentials: 'include' });
+    fetch('http://localhost:8000/api/csrf/', { 
+      credentials: 'include' 
+    }).catch(err => {
+      console.error('CSRF fetch error:', err);
+    });
   }, []);
 
-  const validateEmail = (email) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("");
-
-    if (!email || !password) {
-      setMessage("❗ Please fill all fields");
-      return;
-    }
-    if (!validateEmail(email)) {
-      setMessage("❗ Please enter a valid email");
-      return;
-    }
-    if (password.length < 6) {
-      setMessage("❗ Password must be at least 6 characters");
-      return;
-    }
+    setMessage('');
+    setLoading(true);
 
     try {
-      setLoading(true);
-
-      const res = await authFetch("/api/login/", {
-        method: "POST",
-        credentials: "include",
+      const response = await authFetch('http://localhost:8000/api/login/', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken,
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: email,
-          password: password,
+          username: formData.username,
+          password: formData.password
         }),
       });
 
-      const data = await res.json();
+      const data = await response.json();
 
-      if (res.ok) {
-        setCurrentUser(data.user); // <- this stores user in App
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1000); // Adjust delay if needed
+      // Handle successful login
+      setCurrentUser(data.user);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      navigate('/dashboard');
 
-
-        // You can store user info to localStorage or context if needed
-        console.log("User data:", data.user);
-        // e.g., localStorage.setItem("user", JSON.stringify(data.user));
-      } else {
-        setMessage(
-          res.status === 403 ? "⚠️ Your account is not approved yet." :
-          res.status === 401 ? "❌ Incorrect Username / Password" :
-          `⚠️ ${data.error || "Login failed. Please try again."}`
-        );
-      }
     } catch (error) {
-      setMessage("❗ Something went wrong. Try again.");
-      console.error("Login error:", error);
+      console.error('Login error:', error);
+      
+      // Enhanced error messages based on your Django responses
+      setMessage(
+        error.message.includes('credentials') ? '❌ Invalid username or password' :
+        error.message.includes('approved') ? '⚠️ Account not approved yet' :
+        '❗ Login failed. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleForgotPassword = () => {
-    alert("Redirect to forgot password page or show modal");
   };
 
   return (
@@ -89,15 +72,16 @@ export default function Login({ setCurrentUser }) {
       <div className="login-form-container">
         <h2>Login</h2>
         <form onSubmit={handleSubmit} className="login-form">
-
           <div className="input-with-icon">
-            <span className="icon" role="img" aria-label="email">📧</span>
+            <span className="icon" role="img" aria-label="username">👤</span>
             <input
-              type="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              name="username"
+              placeholder="Username"
+              value={formData.username}
+              onChange={handleChange}
               required
+              autoComplete="username"
             />
           </div>
 
@@ -105,40 +89,41 @@ export default function Login({ setCurrentUser }) {
             <span className="icon" role="img" aria-label="password">🔒</span>
             <input
               type="password"
+              name="password"
               placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={formData.password}
+              onChange={handleChange}
               required
               minLength={6}
+              autoComplete="current-password"
             />
           </div>
 
-          <div
-            className="forgot-password"
-            onClick={handleForgotPassword}
+          <button 
+            type="submit" 
+            disabled={loading}
+            className={loading ? 'loading' : ''}
           >
-            Forgot Password?
-          </div>
-
-          <button type="submit" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
+            {loading ? (
+              <>
+                <span className="spinner"></span>
+                Logging in...
+              </>
+            ) : 'Login'}
           </button>
         </form>
 
         {message && (
-          <div
-            className={`alert mt-3 ${
-              message.startsWith("✅")
-                ? "alert-success"
-                : message.startsWith("❌")
-                ? "alert-danger"
-                : "alert-warning"
-            }`}
-          >
+          <div className={`alert mt-3 ${
+            message.startsWith('❌') ? 'alert-danger' :
+            message.startsWith('⚠️') ? 'alert-warning' : 'alert-info'
+          }`}>
             {message}
           </div>
         )}
       </div>
     </div>
   );
-}
+};
+
+export default Login;

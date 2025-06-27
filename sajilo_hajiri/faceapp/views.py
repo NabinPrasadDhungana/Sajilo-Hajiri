@@ -26,15 +26,20 @@ class RegisterUserView(APIView):
     @method_decorator(ensure_csrf_cookie)
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            return Response(
-                {'message': 'User registered successfully and is pending approval',
-                 'user_id': user.id }, 
-                status=status.HTTP_201_CREATED
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+        if not serializer.is_valid():
+            return Response({
+                'errors': serializer.errors,
+                'message': 'Validation failed'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+        user = serializer.save()
+        return Response(
+            {'message': 'User registered successfully and is pending approval',
+             'user_id': user.id }, 
+            status=status.HTTP_201_CREATED
+        )
+    
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
