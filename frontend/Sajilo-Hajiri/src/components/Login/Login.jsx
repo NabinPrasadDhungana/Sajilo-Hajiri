@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import "./Login.css";
 import Cookies from "js-cookie";
-import getCSRFToken, { authFetch } from '../../Helper/Csrf_token';
+import { authFetch } from '../../Helper/Csrf_token';
 
 
 export default function Login({ setCurrentUser }) {
@@ -21,9 +21,6 @@ export default function Login({ setCurrentUser }) {
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleSubmit = async (e) => {
-    const csrfToken = await getCSRFToken();
-
-    // const csrfToken = Cookies.get("csrftoken");
     e.preventDefault();
     setMessage("");
 
