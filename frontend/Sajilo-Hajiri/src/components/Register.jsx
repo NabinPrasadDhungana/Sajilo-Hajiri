@@ -12,6 +12,18 @@ const Register = (props) => {
   const [emailError, setEmailError] = useState('');
   const [isWebcamOpen, setIsWebcamOpen] = useState(false);
 
+    // Password states | change from hemraj
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
+
+      // Password states | change from hemraj
+  if (password !== confirmPassword) {
+      setConfirmPasswordError('Passwords do not match.');
+      isValid = false;
+    }
+
   const [semester, setSemester] = useState('');
   const [section, setSection] = useState('');
   const [department, setDepartment] = useState('');
@@ -32,6 +44,13 @@ const Register = (props) => {
   const isValidEmail = (email) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
+  //change from hemraj
+  const validatePassword = (pass) => {
+  // Minimum 8 characters, at least one uppercase, one lowercase, one number and one special character
+  const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  return re.test(pass);
+  };
+
   const handlePhotoCapture = (image) => {
     setPhoto(image);
     setIsWebcamOpen(false);
@@ -51,6 +70,12 @@ const Register = (props) => {
       setEmailError('Please enter a valid email address.');
       setError('Please fill in all required fields.');
       return;
+    }
+
+    // change from hemraj 
+    if (!validatePassword(password)) {
+      setPasswordError('Password must be at least 8 characters with uppercase, lowercase, number, and special character.');
+      isValid = false;
     }
     if (semester.trim() === '') {
       setSemesterError('Semester is required.');
@@ -92,7 +117,7 @@ const Register = (props) => {
     if (role === 'student') {
       formData.append('roll_number', collegeRoll);
     }
-    formData.append('password', 'default123'); // use a field or generate if needed
+    formData.append('password', password); // use a field or generate if needed
 
     // Convert Base64 to Blob
     const blob = await fetch(photo).then(res => res.blob());
@@ -128,6 +153,7 @@ const Register = (props) => {
     console.log({
       fullName,
       email,
+      password,
       role,
       semester,
       section,
@@ -173,6 +199,45 @@ const Register = (props) => {
             }}
           />
           {fullNameError && <div className="invalid-feedback">{fullNameError}</div>}
+        </div>
+
+                {/* Password | change by hemraj*/} 
+        <div className="my-3">
+          <label htmlFor="passwordInput" className="form-label">Password</label>
+          <input
+            type="password"
+            className={`form-control ${passwordError ? 'is-invalid' : ''}`}
+            id="passwordInput"
+            value={password}
+            onChange={(e) => { 
+              setPassword(e.target.value); 
+              setPasswordError(''); 
+              setError(''); 
+            }}
+            required
+          />
+          {passwordError && <div className="invalid-feedback">{passwordError}</div>}
+          <div className="form-text">
+            Password must contain at least 8 characters, including uppercase, lowercase, number, and special character.
+          </div>
+        </div>
+
+        {/* Confirm Password */}
+        <div className="my-3">
+          <label htmlFor="confirmPasswordInput" className="form-label">Confirm Password</label>
+          <input
+            type="password"
+            className={`form-control ${confirmPasswordError ? 'is-invalid' : ''}`}
+            id="confirmPasswordInput"
+            value={confirmPassword}
+            onChange={(e) => { 
+              setConfirmPassword(e.target.value); 
+              setConfirmPasswordError(''); 
+              setError(''); 
+            }}
+            required
+          />
+          {confirmPasswordError && <div className="invalid-feedback">{confirmPasswordError}</div>}
         </div>
 
         {/* Role */}
