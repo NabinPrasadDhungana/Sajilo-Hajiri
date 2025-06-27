@@ -16,17 +16,9 @@ class User(AbstractUser):
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     name = models.CharField(max_length=150, blank=True, null=True)
-<<<<<<< HEAD
+    roll_number = models.CharField(max_length=10, unique=True, null=True, blank=True)  # Use CharField (final version)
     approval_status = models.CharField(max_length=15, choices=APPROVAL_CHOICES, default='pending')
     feedback = models.TextField(blank=True, null=True)  # feedback if unapproved
-    roll_number = models.PositiveIntegerField(blank=True, null=True)
-
-
-=======
-    roll_number = models.CharField(max_length=10, unique=True, null=True, blank=True)
-    approval_status = models.CharField(max_length=15, choices=APPROVAL_CHOICES, default='pending')
-    feedback = models.TextField(blank=True, null=True)
->>>>>>> f39a5bfcac0cd8208fead66f4efdee44c9c0b9d4
 
     def __str__(self):
         return self.name or self.username
@@ -68,17 +60,12 @@ class ClassSubject(models.Model):
 class StudentClassEnrollment(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'role': 'student'})
     enrolled_class = models.ForeignKey(Class, on_delete=models.CASCADE)
-<<<<<<< HEAD
-    # roll_number = models.PositiveIntegerField()
-=======
->>>>>>> f39a5bfcac0cd8208fead66f4efdee44c9c0b9d4
 
     class Meta:
         unique_together = ('enrolled_class', 'student')
 
     def __str__(self):
         return f"{self.student.name} - {self.enrolled_class.name} (Roll: {self.student.roll_number})"
-
 
 
 class FaceEncoding(models.Model):
