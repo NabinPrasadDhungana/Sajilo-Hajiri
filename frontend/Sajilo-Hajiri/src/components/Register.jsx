@@ -1,54 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import WebcamCapture from './WebcamCapture';
 import getCSRFToken from '../Helper/Csrf_token';
 
-
 const Register = (props) => {
+  // Basic Information
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [photo, setPhoto] = useState(null);
   const [error, setError] = useState('');
-  const [fullNameError, setFullNameError] = useState('');
-  const [emailError, setEmailError] = useState('');
+  const [message, setMessage] = useState('');
   const [isWebcamOpen, setIsWebcamOpen] = useState(false);
 
-    // Password states | change from hemraj
+  // Password fields
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  // Error states
+  const [fullNameError, setFullNameError] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
-      // Password states | change from hemraj
-  if (password !== confirmPassword) {
-      setConfirmPasswordError('Passwords do not match.');
-      isValid = false;
-    }
-
+  // Role-specific fields
+  const [role, setRole] = useState('student');
   const [semester, setSemester] = useState('');
   const [section, setSection] = useState('');
   const [department, setDepartment] = useState('');
-  const [role, setRole] = useState('student');
   const [collegeRoll, setCollegeRoll] = useState('');
 
+  // Role-specific error states
   const [semesterError, setSemesterError] = useState('');
   const [sectionError, setSectionError] = useState('');
   const [departmentError, setDepartmentError] = useState('');
-  const [roleError, setRoleError] = useState('');
   const [collegeRollError, setCollegeRollError] = useState('');
 
-  const [message, setMessage] = useState('');
-
-  
   const isTeacher = role === 'teacher';
 
-  const isValidEmail = (email) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  // Clear student-specific fields when role changes to teacher
+  useEffect(() => {
+    if (isTeacher) {
+      setSemester('');
+      setSection('');
+      setDepartment('');
+      setCollegeRoll('');
+      setSemesterError('');
+      setSectionError('');
+      setDepartmentError('');
+      setCollegeRollError('');
+    }
+  }, [isTeacher]);
 
-  //change from hemraj
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
   const validatePassword = (pass) => {
-  // Minimum 8 characters, at least one uppercase, one lowercase, one number and one special character
-  const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-  return re.test(pass);
+    const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return re.test(pass);
   };
 
   const handlePhotoCapture = (image) => {
@@ -58,66 +64,84 @@ const Register = (props) => {
   };
 
   const handleSubmit = async () => {
-    // Validations (unchanged)
-     const csrfToken = await getCSRFToken();
+    const csrfToken = await getCSRFToken();
+    let isValid = true;
 
+    // Reset all errors
+    setFullNameError('');
+    setEmailError('');
+    setPasswordError('');
+    setConfirmPasswordError('');
+    setSemesterError('');
+    setSectionError('');
+    setDepartmentError('');
+    setCollegeRollError('');
+    setError('');
+
+    // Validate common fields
     if (fullName.trim() === '') {
       setFullNameError('Full Name is required.');
-      setError('Please fill in all required fields.');
-      return;
-    }
-    if (!isValidEmail(email)) {
-      setEmailError('Please enter a valid email address.');
-      setError('Please fill in all required fields.');
-      return;
+      isValid = false;
     }
 
-    // change from hemraj 
+    if (!isValidEmail(email)) {
+      setEmailError('Please enter a valid email address.');
+      isValid = false;
+    }
+
     if (!validatePassword(password)) {
       setPasswordError('Password must be at least 8 characters with uppercase, lowercase, number, and special character.');
       isValid = false;
     }
-    if (semester.trim() === '') {
-      setSemesterError('Semester is required.');
-      setError('Please fill in all required fields.');
-      return;
-    }
-    if (section.trim() === '') {
-      setSectionError('Section is required.');
-      setError('Please fill in all required fields.');
-      return;
-    }
-    if (department.trim() === '') {
-      setDepartmentError('Department is required.');
-      setError('Please fill in all required fields.');
-      return;
-    }
-    if (role.trim() === '') {
-      setRoleError('Role is required.');
-      setError('Please fill in all required fields.');
-      return;
-    }
-    if (role === 'student' && collegeRoll.trim() === '') {
-      setCollegeRollError('College Roll Number is required for students.');
-      setError('Please fill in all required fields.');
-      return;
-    }
-    if (!photo) {
-      setError('Please upload or capture a photo.');
-      return;
+
+    if (password !== confirmPassword) {
+      setConfirmPasswordError('Passwords do not match.');
+      isValid = false;
     }
 
-    setError('');
+    // Validate student-specific fields
+    if (!isTeacher) {
+      if (semester.trim() === '') {
+        setSemesterError('Semester is required.');
+        isValid = false;
+      }
+      if (section.trim() === '') {
+        setSectionError('Section is required.');
+        isValid = false;
+      }
+      if (department.trim() === '') {
+        setDepartmentError('Department is required.');
+        isValid = false;
+      }
+      if (collegeRoll.trim() === '') {
+        setCollegeRollError('College Roll Number is required.');
+        isValid = false;
+      }
+    }
+
+    if (!photo) {
+      setError('Please upload or capture a photo.');
+      isValid = false;
+    }
+
+    if (!isValid) {
+      setError('Please fill in all required fields correctly.');
+      return;
+    }
 
     const formData = new FormData();
     formData.append('email', email);
-    formData.append('username', email); // if you're using email as username
+    formData.append('username', email);
     formData.append('name', fullName);
     formData.append('role', role);
-    if (role === 'student') {
+    formData.append('password', password);
+
+    if (!isTeacher) {
+      formData.append('semester', semester);
+      formData.append('section', section);
+      formData.append('department', department);
       formData.append('roll_number', collegeRoll);
     }
-    formData.append('password', password); // use a field or generate if needed
 
     // Convert Base64 to Blob
     const blob = await fetch(photo).then(res => res.blob());
@@ -125,12 +149,11 @@ const Register = (props) => {
 
     try {
       const response = await fetch('/api/register/', {
-         method: "POST",
+        method: "POST",
         credentials: "include",
         headers: {
-          
-          "X-CSRFToken": csrfToken},
-        
+          "X-CSRFToken": csrfToken
+        },
         body: formData,
       });
 
@@ -149,22 +172,7 @@ const Register = (props) => {
       console.error(error);
       setError("Server error occurred.");
     }
-
-    console.log({
-      fullName,
-      email,
-      password,
-      role,
-      semester,
-      section,
-      department,
-      collegeRoll,
-      photo,
-    });
-    
-    // TODO: Send to backend
   };
-  
 
   return (
     <div className="total" style={{ marginLeft: '10px' }}>
@@ -178,6 +186,7 @@ const Register = (props) => {
             type="email"
             className={`form-control ${emailError ? 'is-invalid' : ''}`}
             id="emailInput"
+            value={email}
             onChange={(e) => { setEmail(e.target.value); setEmailError(''); setError(''); }}
             required
           />
@@ -191,6 +200,7 @@ const Register = (props) => {
             type="text"
             className={`form-control ${fullNameError ? 'is-invalid' : ''}`}
             id="fullNameInput"
+            value={fullName}
             onChange={(e) => { setFullName(e.target.value); setFullNameError(''); setError(''); }}
             required
             style={{
@@ -201,7 +211,7 @@ const Register = (props) => {
           {fullNameError && <div className="invalid-feedback">{fullNameError}</div>}
         </div>
 
-                {/* Password | change by hemraj*/} 
+        {/* Password */}
         <div className="my-3">
           <label htmlFor="passwordInput" className="form-label">Password</label>
           <input
@@ -245,19 +255,21 @@ const Register = (props) => {
           <label htmlFor="roleSelect" className="form-label">Role</label>
           <select
             id="roleSelect"
-            className={`form-select ${roleError ? 'is-invalid' : ''}`}
+            className="form-select"
             value={role}
-            onChange={(e) => { setRole(e.target.value); setRoleError(''); setError(''); }}
+            onChange={(e) => { 
+              setRole(e.target.value); 
+              setError(''); 
+            }}
             required
           >
             <option value="student">Student</option>
             <option value="teacher">Teacher</option>
           </select>
-          {roleError && <div className="invalid-feedback">{roleError}</div>}
         </div>
 
-        {/* These fields are for STUDENTS only */}
-        {!isTeacher && (
+        {/* Student-specific fields */}
+        {role === 'student' && (
           <>
             {/* Semester */}
             <div className="my-3">
@@ -265,7 +277,11 @@ const Register = (props) => {
               <select
                 className={`form-select ${semesterError ? 'is-invalid' : ''}`}
                 value={semester}
-                onChange={(e) => { setSemester(e.target.value); setSemesterError(''); setError(''); }}
+                onChange={(e) => { 
+                  setSemester(e.target.value); 
+                  setSemesterError(''); 
+                  setError(''); 
+                }}
               >
                 <option value="">Select Semester</option>
                 {[...Array(8)].map((_, i) => (
@@ -281,7 +297,11 @@ const Register = (props) => {
               <select
                 className={`form-select ${sectionError ? 'is-invalid' : ''}`}
                 value={section}
-                onChange={(e) => { setSection(e.target.value); setSectionError(''); setError(''); }}
+                onChange={(e) => { 
+                  setSection(e.target.value); 
+                  setSectionError(''); 
+                  setError(''); 
+                }}
               >
                 <option value="">Select Section</option>
                 <option value="Morning">Morning</option>
@@ -296,7 +316,11 @@ const Register = (props) => {
               <select
                 className={`form-select ${departmentError ? 'is-invalid' : ''}`}
                 value={department}
-                onChange={(e) => { setDepartment(e.target.value); setDepartmentError(''); setError(''); }}
+                onChange={(e) => { 
+                  setDepartment(e.target.value); 
+                  setDepartmentError(''); 
+                  setError(''); 
+                }}
               >
                 <option value="">Select Department</option>
                 <option value="IT">IT</option>
@@ -316,7 +340,12 @@ const Register = (props) => {
                 type="text"
                 className={`form-control ${collegeRollError ? 'is-invalid' : ''}`}
                 id="collegeRollInput"
-                onChange={(e) => { setCollegeRoll(e.target.value); setCollegeRollError(''); setError(''); }}
+                value={collegeRoll}
+                onChange={(e) => { 
+                  setCollegeRoll(e.target.value); 
+                  setCollegeRollError(''); 
+                  setError(''); 
+                }}
                 required
                 placeholder="e.g., 221506"
               />
@@ -328,7 +357,6 @@ const Register = (props) => {
         {/* Photo Upload or Webcam Capture */}
         <div className="my-4">
           <label className="form-label fw-bold">Upload or Capture Photo</label>
-
           <div className="mb-3">
             <button
               type="button"
@@ -402,7 +430,6 @@ const Register = (props) => {
         </button>
         
         {message && <div className="alert alert-success mt-3">{message}</div>}
-
         {error && <div className="alert alert-danger mt-3">{error}</div>}
       </form>
     </div>
