@@ -1,6 +1,7 @@
+// components/AdminPanel/AdminPanel.jsx
 import React, { useState } from "react";
 
-const AdminPanel = ({ users, approveUser, unapproveUser, sendFeedback }) => {
+const AdminPanel = ({ stats, users, approveUser, unapproveUser, sendFeedback }) => {
   const [feedbackText, setFeedbackText] = useState("");
   const [selectedEmail, setSelectedEmail] = useState(null);
 
@@ -17,9 +18,33 @@ const AdminPanel = ({ users, approveUser, unapproveUser, sendFeedback }) => {
 
   return (
     <div className="container mt-5">
-      <h2 className="mb-4">Admin Panel - Manage Students & Teachers</h2>
+      <h2 className="mb-4">Admin Panel - Manage Users</h2>
+
+      {/* Stats Section */}
+      <div className="row mb-4">
+        <div className="col">
+          <div className="card bg-light p-3">
+            <h5>Total Users</h5>
+            <p>{stats.total_users}</p>
+          </div>
+        </div>
+        <div className="col">
+          <div className="card bg-light p-3">
+            <h5>Total Students</h5>
+            <p>{stats.total_students}</p>
+          </div>
+        </div>
+        <div className="col">
+          <div className="card bg-light p-3">
+            <h5>Total Teachers</h5>
+            <p>{stats.total_teachers}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Pending Users Table */}
       {users.length === 0 ? (
-        <p>No users registered yet.</p>
+        <p>No pending users.</p>
       ) : (
         <table className="table table-bordered table-hover">
           <thead className="table-dark">
@@ -35,62 +60,28 @@ const AdminPanel = ({ users, approveUser, unapproveUser, sendFeedback }) => {
           <tbody>
             {users.map((user) => (
               <tr key={user.email}>
-                <td>{user.fullName || "N/A"}</td>
+                <td>{user.name || "N/A"}</td>
                 <td>{user.email}</td>
                 <td>
-                  <span
-                    className={`badge ${
-                      user.role === "teacher"
-                        ? "bg-info text-dark"
-                        : "bg-primary"
-                    }`}
-                  >
+                  <span className={`badge ${user.role === "teacher" ? "bg-info text-dark" : "bg-primary"}`}>
                     {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                   </span>
                 </td>
                 <td>
-                  <strong
-                    style={{
-                      color:
-                        user.status === "approved"
-                          ? "green"
-                          : user.status === "unapproved"
-                          ? "red"
-                          : "orange",
-                    }}
-                  >
-                    {user.status || "pending"}
+                  <strong style={{ color: user.approval_status === "approved" ? "green" : user.approval_status === "unapproved" ? "red" : "orange" }}>
+                    {user.approval_status || "pending"}
                   </strong>
                 </td>
-                <td>{user.notification || "—"}</td>
+                <td>{user.feedback || "—"}</td>
                 <td>
-                  <button
-                    className="btn btn-success btn-sm me-2"
-                    disabled={user.status === "approved"}
-                    onClick={() => approveUser(user.email)}
-                  >
+                  <button className="btn btn-success btn-sm me-2" disabled={user.approval_status === "approved"} onClick={() => approveUser(user.email)}>
                     Approve
                   </button>
-                  <button
-                    className="btn btn-danger btn-sm me-2"
-                    disabled={user.status === "unapproved"}
-                    onClick={() => unapproveUser(user.email)}
-                  >
+                  <button className="btn btn-danger btn-sm me-2" disabled={user.approval_status === "unapproved"} onClick={() => unapproveUser(user.email)}>
                     Unapprove
                   </button>
-                  <button
-                    className={`btn btn-primary btn-sm ${
-                      selectedEmail === user.email ? "active" : ""
-                    }`}
-                    onClick={() =>
-                      setSelectedEmail(
-                        selectedEmail === user.email ? null : user.email
-                      )
-                    }
-                  >
-                    {selectedEmail === user.email
-                      ? "Cancel Feedback"
-                      : "Send Feedback"}
+                  <button className={`btn btn-primary btn-sm ${selectedEmail === user.email ? "active" : ""}`} onClick={() => setSelectedEmail(selectedEmail === user.email ? null : user.email)}>
+                    {selectedEmail === user.email ? "Cancel Feedback" : "Send Feedback"}
                   </button>
                 </td>
               </tr>
@@ -102,10 +93,7 @@ const AdminPanel = ({ users, approveUser, unapproveUser, sendFeedback }) => {
       {/* Feedback Form */}
       {selectedEmail && (
         <div className="mt-4">
-          <h5>
-            Send Feedback to:{" "}
-            <span className="text-primary">{selectedEmail}</span>
-          </h5>
+          <h5>Send Feedback to: <span className="text-primary">{selectedEmail}</span></h5>
           <textarea
             className="form-control"
             rows="4"
