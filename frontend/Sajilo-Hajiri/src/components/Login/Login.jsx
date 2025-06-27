@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import "./Login.css";
 import Cookies from "js-cookie";
-import getCSRFToken from '../../Helper/Csrf_token';
+import getCSRFToken, { authFetch } from '../../Helper/Csrf_token';
 
 
 export default function Login({ setCurrentUser }) {
@@ -11,6 +11,11 @@ export default function Login({ setCurrentUser }) {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Pre-fetch CSRF token when component mounts
+  useEffect(() => {
+    fetch('/api/csrf/', { credentials: 'include' });
+  }, []);
 
   const validateEmail = (email) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -38,7 +43,7 @@ export default function Login({ setCurrentUser }) {
     try {
       setLoading(true);
 
-      const res = await fetch("/api/login/", {
+      const res = await authFetch("/api/login/", {
         method: "POST",
         credentials: "include",
         headers: {
@@ -57,22 +62,22 @@ export default function Login({ setCurrentUser }) {
         setCurrentUser(data.user); // <- this stores user in App
         setTimeout(() => {
           navigate('/dashboard');
-        }, 1500); // Adjust delay if needed
+        }, 1000); // Adjust delay if needed
 
 
         // You can store user info to localStorage or context if needed
         console.log("User data:", data.user);
         // e.g., localStorage.setItem("user", JSON.stringify(data.user));
-      } else if (res.status === 403) {
-        setMessage("⚠️ Your account is not approved yet.");
-      } else if (res.status === 401) {
-        setMessage("❌ Incorrect Username / Password");
       } else {
-        setMessage("⚠️ " + (data.error || "Login failed. Please try again."));
+        setMessage(
+          res.status === 403 ? "⚠️ Your account is not approved yet." :
+          res.status === 401 ? "❌ Incorrect Username / Password" :
+          `⚠️ ${data.error || "Login failed. Please try again."}`
+        );
       }
     } catch (error) {
-      console.error("Login error:", error);
       setMessage("❗ Something went wrong. Try again.");
+      console.error("Login error:", error);
     } finally {
       setLoading(false);
     }
