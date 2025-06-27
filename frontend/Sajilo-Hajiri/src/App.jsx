@@ -1,6 +1,5 @@
 // App.jsx
-import React, { useState } from "react";
-import { useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import Navbar from './components/Navbar';
@@ -13,19 +12,10 @@ import StudentHistoryModal from "./components/Dashboard/StudentHistoryModal";
 import Footer from "./components/Footer/Footer";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-
-
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
-  
-  useEffect(() => {
-    fetch("/api/csrf/", {
-      credentials: "include",
-    });
-  }, []);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [notifications, setNotifications] = useState([]);
-
 
   const [users, setUsers] = useState([
     {
@@ -43,6 +33,27 @@ export default function App() {
       notification: "Welcome!",
     },
   ]);
+
+  useEffect(() => {
+    fetch("/api/csrf/", {
+      credentials: "include",
+    });
+
+    // Optional: Restore session from localStorage
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
+      setCurrentUser(JSON.parse(savedUser));
+    }
+  }, []);
+
+  const handleLogout = async () => {
+    await fetch("/api/logout/", {
+      method: "POST",
+      credentials: "include",
+    });
+    setCurrentUser(null);
+    localStorage.removeItem("user");
+  };
 
   const handleStudentClick = (student) => {
     setSelectedStudent(student);
@@ -99,31 +110,17 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <Navbar notifications={notifications} />
+      <Navbar
+        currentUser={currentUser}
+        handleLogout={handleLogout}
+        notifications={notifications}
+      />
+
       <Routes>
         <Route exact path="/" element={<Home />} />
-        {/* <Route path="/Login" element={<Login />} /> */}
-        <Route
-          exact
-          path="/register"
-          element={<Register showAlert={(msg, type) => alert(`${msg}`)} />}
-        />
-        <Route path="/Login" element={<Login setCurrentUser={setCurrentUser} />} />
-
+        <Route exact path="/register" element={<Register showAlert={(msg) => alert(`${msg}`)} />} />
+        <Route path="/login" element={<Login setCurrentUser={setCurrentUser} />} />
         <Route path="/dashboard" element={<Dashboard userRole={currentUser?.role} />} />
-
-        {/* <Route
-          exact
-          path="/dashboard"
-          element={
-            <>
-              <Dashboard onStudentClick={handleStudentClick} />
-              {selectedStudent && (
-                <StudentHistoryModal student={selectedStudent} onClose={closeModal} />
-              )}
-            </>
-          }
-        /> */}
         <Route
           exact
           path="/admin"
@@ -137,6 +134,7 @@ export default function App() {
           }
         />
       </Routes>
+
       <Footer />
     </BrowserRouter>
   );
