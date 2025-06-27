@@ -8,4 +8,6 @@ urlpatterns = [
     path('dashboard/', DashboardAPIView.as_view(), name='dashboard'),
     path('csrf/', CSRFTokenView.as_view(), name='csrf'),
     path('attendance/student/', StudentAttendanceView.as_view(), name='student-attendance'),
+    
+
 ]

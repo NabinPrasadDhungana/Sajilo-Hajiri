@@ -1,78 +1,133 @@
 // components/Dashboard/index.jsx
-import React, { useState } from "react";
-import "./Dashboard.css";
+import React, { useState, useEffect } from "react";
+import AdminPanel from "../AdminPanel";
 
-const attendanceData = {
-  Math: [
-    { id: 1, name: "Anish Joshi", roll: "07", arrival: "09:05 AM", departure: "03:58 PM", duration: "6h 53m" },
-    { id: 3, name: "Sita Sharma", roll: "12", arrival: "09:15 AM", departure: "04:00 PM", duration: "6h 45m" },
-  ],
-  Science: [
-    { id: 2, name: "Hemraj Pant", roll: "08", arrival: "09:11 AM", departure: "-", duration: "Ongoing" },
-    { id: 4, name: "Ram Kumar", roll: "09", arrival: "09:00 AM", departure: "03:30 PM", duration: "6h 30m" },
-  ],
-  English: [
-    { id: 1, name: "Anish Joshi", roll: "07", arrival: "09:10 AM", departure: "04:00 PM", duration: "6h 50m" },
-    { id: 5, name: "Gita Rai", roll: "10", arrival: "09:05 AM", departure: "03:45 PM", duration: "6h 40m" },
-  ]
-};
 
-export default function Dashboard({ onStudentClick }) {
-  const subjects = Object.keys(attendanceData);
-  const [selectedSubject, setSelectedSubject] = useState(subjects[0]);
+export default function Dashboard({ user, token }) {
+  const [data, setData] = useState(null);
+  const [selectedClass, setSelectedClass] = useState(null);
+  const [selectedSubject, setSelectedSubject] = useState(null);
+  const [selectedStudents, setSelectedStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const students = attendanceData[selectedSubject];
+  useEffect(() => {
+    fetch("/api/dashboard/", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        setData(res);
+        setLoading(false);
+      });
+  }, [token]);
 
-  return (
-    <div className="dashboard">
-      <header className="header">
-        <h1>Attendance Dashboard</h1>
-      </header>
+  // Dummy handlers – replace with real API calls if needed
+  const handleApproveUser = (email) => {
+    console.log("Approve:", email);
+  };
+  const handleUnapproveUser = (email) => {
+    console.log("Unapprove:", email);
+  };
+  const handleSendFeedback = (email, feedback) => {
+    console.log("Feedback:", email, feedback);
+  };
 
-      <nav className="subject-tabs">
-        {subjects.map((subject) => (
-          <button
-            key={subject}
-            className={`subject-tab ${subject === selectedSubject ? "active" : ""}`}
-            onClick={() => setSelectedSubject(subject)}
-          >
-            {subject}
-          </button>
-        ))}
-      </nav>
+  if (loading) return <p>Loading dashboard...</p>;
+  if (!data) return <p>No dashboard data found.</p>;
 
-      <section className="summary">
-        <div className="card">Subject: {selectedSubject}</div>
-        <div className="card">Total Present: {students.length}</div>
-        {/* Add more summary stats here if you want */}
-      </section>
+  // === Admin View ===
+  if (user.role === "admin") {
+    return (
+      <AdminPanel
+        stats={data.stats}
+        users={data.stats.pending_users}
+        approveUser={handleApproveUser}
+        unapproveUser={handleUnapproveUser}
+        sendFeedback={handleSendFeedback}
+      />
+    );
+  }
 
-      <section className="student-table-section">
-        <h2>{selectedSubject} Attendance</h2>
-        <table className="attendance-table">
+  // === Teacher View ===
+  if (user.role === "teacher") {
+    const classes = data.teaching;
+    const handleSelect = (cls) => {
+      setSelectedClass(cls.class);
+      setSelectedSubject(cls.subject);
+      setSelectedStudents(cls.students);
+    };
+
+    return (
+      <div className="dashboard container mt-4">
+        <h2>Teacher Dashboard</h2>
+        <select className="form-select mb-3" onChange={(e) => handleSelect(classes[e.target.value])}>
+          <option>Select Subject/Class</option>
+          {classes.map((item, index) => (
+            <option key={index} value={index}>
+              {item.subject} ({item.class})
+            </option>
+          ))}
+        </select>
+
+        {selectedStudents.length > 0 && (
+          <>
+            <h4>{selectedSubject} - {selectedClass}</h4>
+            <table className="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Roll</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedStudents.map((s) => (
+                  <tr key={s.id}>
+                    <td>{s.name}</td>
+                    <td>{s.roll_number}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // === Student View ===
+  if (user.role === "student") {
+    const { attendance, class: className } = data;
+
+    return (
+      <div className="dashboard container mt-4">
+        <h2>Student Dashboard</h2>
+        <div className="card p-3 mb-3">Class: {className}</div>
+        <h4>Recent Attendance</h4>
+        <table className="table table-bordered">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Roll No.</th>
+              <th>Date</th>
+              <th>Subject</th>
               <th>Arrival</th>
               <th>Departure</th>
-              <th>Duration</th>
             </tr>
           </thead>
           <tbody>
-            {students.map((student) => (
-              <tr key={student.id} onClick={() => onStudentClick(student)}>
-                <td className="name-cell">{student.name}</td>
-                <td>{student.roll}</td>
-                <td>{student.arrival}</td>
-                <td>{student.departure}</td>
-                <td>{student.duration}</td>
+            {attendance.map((entry) => (
+              <tr key={entry.id}>
+                <td>{new Date(entry.date).toLocaleDateString()}</td>
+                <td>{entry.subject_name}</td>
+                <td>{entry.entry_time ? new Date(entry.entry_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}</td>
+                <td>{entry.exit_time ? new Date(entry.exit_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}</td>
               </tr>
             ))}
           </tbody>
         </table>
-      </section>
-    </div>
-  );
+      </div>
+    );
+  }
+
+  return <div>No role matched.</div>;
 }
-// student.id – Domain name for sale

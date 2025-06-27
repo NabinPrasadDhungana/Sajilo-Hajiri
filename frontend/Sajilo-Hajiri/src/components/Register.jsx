@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import WebcamCapture from './WebcamCapture';
+import getCSRFToken from '../Helper/Csrf_token';
+
 
 const Register = (props) => {
   const [fullName, setFullName] = useState('');
@@ -9,12 +11,6 @@ const Register = (props) => {
   const [fullNameError, setFullNameError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [isWebcamOpen, setIsWebcamOpen] = useState(false);
-  
-  // Password states
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
   const [semester, setSemester] = useState('');
   const [section, setSection] = useState('');
@@ -28,16 +24,13 @@ const Register = (props) => {
   const [roleError, setRoleError] = useState('');
   const [collegeRollError, setCollegeRollError] = useState('');
 
+  const [message, setMessage] = useState('');
+
+  
   const isTeacher = role === 'teacher';
 
   const isValidEmail = (email) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-  const validatePassword = (pass) => {
-    // Minimum 8 characters, at least one uppercase, one lowercase, one number and one special character
-    const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    return re.test(pass);
-  };
 
   const handlePhotoCapture = (image) => {
     setPhoto(image);
@@ -45,77 +38,96 @@ const Register = (props) => {
     setError('');
   };
 
-  const handleSubmit = () => {
-    // Reset all errors
-    setError('');
-    setFullNameError('');
-    setEmailError('');
-    setPasswordError('');
-    setConfirmPasswordError('');
-    setSemesterError('');
-    setSectionError('');
-    setDepartmentError('');
-    setRoleError('');
-    setCollegeRollError('');
-
-    // Validate all fields
-    let isValid = true;
+  const handleSubmit = async () => {
+    // Validations (unchanged)
+     const csrfToken = await getCSRFToken();
 
     if (fullName.trim() === '') {
       setFullNameError('Full Name is required.');
-      isValid = false;
+      setError('Please fill in all required fields.');
+      return;
     }
-
     if (!isValidEmail(email)) {
       setEmailError('Please enter a valid email address.');
-      isValid = false;
+      setError('Please fill in all required fields.');
+      return;
     }
-
-    if (!validatePassword(password)) {
-      setPasswordError('Password must be at least 8 characters with uppercase, lowercase, number, and special character.');
-      isValid = false;
+    if (semester.trim() === '') {
+      setSemesterError('Semester is required.');
+      setError('Please fill in all required fields.');
+      return;
     }
-
-    if (password !== confirmPassword) {
-      setConfirmPasswordError('Passwords do not match.');
-      isValid = false;
+    if (section.trim() === '') {
+      setSectionError('Section is required.');
+      setError('Please fill in all required fields.');
+      return;
     }
-
-    if (!isTeacher) {
-      if (semester.trim() === '') {
-        setSemesterError('Semester is required.');
-        isValid = false;
-      }
-      if (section.trim() === '') {
-        setSectionError('Section is required.');
-        isValid = false;
-      }
-      if (department.trim() === '') {
-        setDepartmentError('Department is required.');
-        isValid = false;
-      }
-      if (collegeRoll.trim() === '') {
-        setCollegeRollError('College Roll Number is required for students.');
-        isValid = false;
-      }
+    if (department.trim() === '') {
+      setDepartmentError('Department is required.');
+      setError('Please fill in all required fields.');
+      return;
     }
-
+    if (role.trim() === '') {
+      setRoleError('Role is required.');
+      setError('Please fill in all required fields.');
+      return;
+    }
+    if (role === 'student' && collegeRoll.trim() === '') {
+      setCollegeRollError('College Roll Number is required for students.');
+      setError('Please fill in all required fields.');
+      return;
+    }
     if (!photo) {
       setError('Please upload or capture a photo.');
-      isValid = false;
-    }
-
-    if (!isValid) {
-      setError('Please fill in all required fields correctly.');
       return;
     }
 
-    props.showAlert("Form Submitted Successfully", "success");
+    setError('');
+
+    const formData = new FormData();
+    formData.append('email', email);
+    formData.append('username', email); // if you're using email as username
+    formData.append('name', fullName);
+    formData.append('role', role);
+    if (role === 'student') {
+      formData.append('roll_number', collegeRoll);
+    }
+    formData.append('password', 'default123'); // use a field or generate if needed
+
+    // Convert Base64 to Blob
+    const blob = await fetch(photo).then(res => res.blob());
+    formData.append('avatar', blob, 'photo.jpg');
+
+    try {
+      const response = await fetch('/api/register/', {
+         method: "POST",
+        credentials: "include",
+        headers: {
+          
+          "X-CSRFToken": csrfToken},
+        
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage('✅ User registered successfully and is pending approval');
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 1500);
+      } else {
+        console.error(data);
+        setError("Registration failed. Please check the inputs.");
+      }
+    } catch (error) {
+      console.error(error);
+      setError("Server error occurred.");
+    }
 
     console.log({
       fullName,
       email,
-      password,
       role,
       semester,
       section,
@@ -123,9 +135,10 @@ const Register = (props) => {
       collegeRoll,
       photo,
     });
-
+    
     // TODO: Send to backend
   };
+  
 
   return (
     <div className="total" style={{ marginLeft: '10px' }}>
@@ -160,45 +173,6 @@ const Register = (props) => {
             }}
           />
           {fullNameError && <div className="invalid-feedback">{fullNameError}</div>}
-        </div>
-
-        {/* Password */}
-        <div className="my-3">
-          <label htmlFor="passwordInput" className="form-label">Password</label>
-          <input
-            type="password"
-            className={`form-control ${passwordError ? 'is-invalid' : ''}`}
-            id="passwordInput"
-            value={password}
-            onChange={(e) => { 
-              setPassword(e.target.value); 
-              setPasswordError(''); 
-              setError(''); 
-            }}
-            required
-          />
-          {passwordError && <div className="invalid-feedback">{passwordError}</div>}
-          <div className="form-text">
-            Password must contain at least 8 characters, including uppercase, lowercase, number, and special character.
-          </div>
-        </div>
-
-        {/* Confirm Password */}
-        <div className="my-3">
-          <label htmlFor="confirmPasswordInput" className="form-label">Confirm Password</label>
-          <input
-            type="password"
-            className={`form-control ${confirmPasswordError ? 'is-invalid' : ''}`}
-            id="confirmPasswordInput"
-            value={confirmPassword}
-            onChange={(e) => { 
-              setConfirmPassword(e.target.value); 
-              setConfirmPasswordError(''); 
-              setError(''); 
-            }}
-            required
-          />
-          {confirmPasswordError && <div className="invalid-feedback">{confirmPasswordError}</div>}
         </div>
 
         {/* Role */}
@@ -361,6 +335,9 @@ const Register = (props) => {
         <button type="button" className="btn btn-primary" onClick={handleSubmit}>
           Submit
         </button>
+        
+        {message && <div className="alert alert-success mt-3">{message}</div>}
+
         {error && <div className="alert alert-danger mt-3">{error}</div>}
       </form>
     </div>
