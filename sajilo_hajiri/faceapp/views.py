@@ -4,7 +4,7 @@ from rest_framework import status, permissions
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, login, logout
 from .models import User, AttendanceRecord, Subject, ClassSubject, StudentClassEnrollment
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, AdminUserReviewSerializer, AttendanceRecordSerializer, SubjectSerializer, UserSerializer
 import os
@@ -19,99 +19,56 @@ from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.middleware.csrf import get_token
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
-# def admin_approve_user(request, user_id):
-#     if request.user.role != 'admin':
-#         return Response({'error': 'Only admins can perform this action.'}, status=403)
-
-#     try:
-#         user = User.objects.get(id=user_id)
-#         user.approval_status = 'approved'
-#         user.feedback = ''
-#         user.save()
-#         return Response({'message': f"{user.username} approved."})
-#     except User.DoesNotExist:
-#         return Response({'error': 'User not found.'}, status=404)
-
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
-# def admin_unapprove_user(request, user_id):
-#     if request.user.role != 'admin':
-#         return Response({'error': 'Only admins can perform this action.'}, status=403)
-
-#     try:
-#         feedback = request.data.get('feedback', '')
-#         user = User.objects.get(id=user_id)
-#         user.approval_status = 'unapproved'
-#         user.feedback = feedback
-#         user.save()
-#         return Response({'message': f"{user.username} unapproved with feedback."})
-#     except User.DoesNotExist:
-#         return Response({'error': 'User not found.'}, status=404)
-
-# @api_view(['DELETE'])
-# @permission_classes([IsAuthenticated])
-# def admin_decline_user(request, user_id):
-#     if request.user.role != 'admin':
-#         return Response({'error': 'Only admins can perform this action.'}, status=403)
-
-#     try:
-#         user = User.objects.get(id=user_id)
-#         # Delete avatar
-#         if user.avatar and os.path.isfile(user.avatar.path):
-#             os.remove(user.avatar.path)
-#         user.delete()
-#         return Response({'message': f"{user.username} declined and removed."})
-#     except User.DoesNotExist:
-#         return Response({'error': 'User not found.'}, status=404)
 
 class RegisterUserView(APIView):
+    permission_classes = [AllowAny]
+
     @method_decorator(ensure_csrf_cookie)
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            user = serializer.save()
             return Response(
-                {'message': 'User registered successfully and is pending approval'}, 
+                {'message': 'User registered successfully and is pending approval',
+                 'user_id': user.id }, 
                 status=status.HTTP_201_CREATED
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class LoginView(APIView):
+    permission_classes = [AllowAny]
+
     @method_decorator(ensure_csrf_cookie)
     def post(self, request):
         serializer = UserLoginSerializer(data=request.data)
-        if serializer.is_valid():
-            user = authenticate(
-                username=serializer.validated_data['username'],
-                password=serializer.validated_data['password']
-            )
-            if user:
-                if user.approval_status == 'approved':
-                    # Set session cookie
-                    request.session['user_id'] = user.id
-                    return Response({
-                        'message': 'Login successful',
-                        'user': {
-                            'id': user.id,
-                            'username': user.username,
-                            'role': user.role,
-                            'name': user.name,
-                            'roll_number': user.roll_number,
-                            'avatar': user.avatar.url if user.avatar else None
-                        }
-                    })
-                else:
-                    return Response(
-                        {'error': 'Your account is not approved yet.'}, 
-                        status=status.HTTP_403_FORBIDDEN
-                    )
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+        user = authenticate(
+            username=serializer.validated_data['username'],
+            password=serializer.validated_data['password']
+        )
+
+        if not user:
             return Response(
                 {'error': 'Invalid credentials'}, 
                 status=status.HTTP_401_UNAUTHORIZED
             )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        if user.approval_status != 'approved':
+            return Response(
+                {'error': 'Your account is not approved yet.'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Session-based login
+        login(request, user)  # This handles session creation
+        
+        return Response({
+            'message': 'Login successful',
+            'user': UserSerializer(user).data
+        })
 
 class CSRFTokenView(APIView):
     @method_decorator(ensure_csrf_cookie)
@@ -130,13 +87,10 @@ class CSRFTokenView(APIView):
         return response
 
 class LogoutView(APIView):
-    permission_classes = [IsAuthenticated]
-
     def post(self, request):
-        # Clear session and CSRF cookie
-        request.session.flush()
+        logout(request) # Django's built-in logout
         response = Response({'message': 'Logged out successfully'})
-        response.delete_cookie('csrftoken')
+        response.delete_cookie('sessionid')
         return response
 
 
