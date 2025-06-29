@@ -173,7 +173,7 @@ const handleSubmit = async (e) => {
   };
 
   return (
-    <div className="total" style={{ marginLeft: '10px' }}>
+    <div className="total main-content" style={{ marginLeft: '10px' }}>
       <form onSubmit={handleSubmit}>
         {/* Email Field */}
         <FormField

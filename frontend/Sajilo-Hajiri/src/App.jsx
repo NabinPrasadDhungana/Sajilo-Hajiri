@@ -11,6 +11,7 @@ import Dashboard from "./components/Dashboard";
 import StudentHistoryModal from "./components/Dashboard/StudentHistoryModal";
 import Footer from "./components/Footer/Footer";
 import 'bootstrap/dist/css/bootstrap.min.css';
+import "./App.css"
 
 export default function App() {
 const [currentUser, setCurrentUser] = useState(() => {
