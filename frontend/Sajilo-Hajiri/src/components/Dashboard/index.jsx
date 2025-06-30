@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminPanel from "../AdminPanel";
 import { authFetch } from "../../Helper/Csrf_token";
+// import "./Dashboard.css"
 
 export default function Dashboard({ user }) {
   const [data, setData] = useState(null);
@@ -117,36 +118,121 @@ export default function Dashboard({ user }) {
   }
 
   if (user.role === "student") {
-  if (data.student_data?.error) {
+  const student = data.student_data;
+
+  if (!student) {
     return (
-      <div className="container mt-5 alert alert-warning">
-        ⚠️ {data.student_data.error}
+      <div className="main-content container mt-4 alert alert-warning">
+        ⚠️ You are not enrolled in any class yet.
       </div>
     );
   }
-  
 
   return (
-    <div className="container mt-5">
-      <h3>Welcome, {user.name || user.username} 👨‍🎓</h3>
-      <p>Class: {data.student_data.class}</p>
-      <h5>Subjects:</h5>
-      <ul>
-        {data.student_data.subjects.map((subj, index) => (
-          <li key={index}>{subj.name}</li>
-        ))}
-      </ul>
-      <h5>Recent Attendance Records:</h5>
-      <ul>
-        {data.student_data.attendance.map((record, index) => (
-          <li key={index}>
-            {record.entry_time} — {record.entry_status}
-          </li>
-        ))}
-      </ul>
+    <div className="main-content container mt-4">
+      <h2 className="mb-4">Welcome, {user.name || user.username} 👨‍🎓</h2>
+
+      <div className="card mb-4 shadow-sm">
+        <div className="card-body">
+          <h5 className="card-title">📚 Class: <span className="text-primary">{student.class}</span></h5>
+        </div>
+      </div>
+
+      <div className="card mb-4 shadow-sm">
+        <div className="card-body">
+          <h5 className="card-title">📘 Subjects:</h5>
+          {student.subjects && student.subjects.length > 0 ? (
+            <ul className="list-group list-group-flush">
+              {student.subjects.map((subj) => (
+                <li key={subj.id} className="list-group-item">
+                  {subj.name} <small className="text-muted">({subj.code})</small>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-muted">No subjects assigned.</p>
+          )}
+        </div>
+      </div>
+
+      <div className="card shadow-sm">
+        <div className="card-body">
+          <h5 className="card-title">📝 Recent Attendance Records:</h5>
+          {student.attendance && student.attendance.length > 0 ? (
+            <ul className="list-group list-group-flush">
+              {student.attendance.map((record) => (
+                <li key={record.id} className="list-group-item">
+                  <strong>{record.subject_name}</strong><br />
+                  <span className="text-muted">
+                    {new Date(record.entry_time).toLocaleString()} — {record.entry_status}
+                    {record.exit_time && (
+                      <> → {new Date(record.exit_time).toLocaleString()} — {record.exit_status}</>
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-muted">No attendance records found.</p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
+
+// dashboard contents for role = teacher
+if (user.role === "teacher") {
+  const teacher = data.teacher_data;
+
+  if (!teacher || teacher.teaching.length === 0) {
+    return (
+      <div className="main-content container mt-4 alert alert-info">
+        📘 You are not assigned to teach any classes yet.
+      </div>
+    );
+  }
+
+  return (
+    <div className="main-content container mt-4">
+      <h2 className="mb-4">Welcome, {user.name || user.username} 👨‍🏫</h2>
+
+      {teacher.teaching.map((assignment, index) => (
+        <div className="card mb-4 shadow-sm" key={index}>
+          <div className="card-body">
+            <h5 className="card-title">
+              Class: <span className="text-primary">{assignment.class}</span> | Subject: <strong>{assignment.subject}</strong>
+            </h5>
+
+            <h6 className="mt-3">👨‍🎓 Students Enrolled:</h6>
+            {assignment.students && assignment.students.length > 0 ? (
+              <ul className="list-group list-group-flush">
+                {assignment.students.map((student, idx) => (
+                  <li key={idx} className="list-group-item d-flex align-items-center">
+                    <img
+                      src={student.avatar ? `http://localhost:8000${student.avatar}` : "/default-avatar.png"}
+                      alt="avatar"
+                      className="rounded-circle me-2"
+                      width="35"
+                      height="35"
+                    />
+                    <div>
+                      <strong>{student.name || student.username}</strong><br />
+                      <small className="text-muted">{student.email} | Roll: {student.roll_number}</small>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-muted">No students enrolled yet.</p>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 
 
 

@@ -54,7 +54,7 @@ class ClassSubject(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.class_instance.name} - {self.subject.code}"
+        return f"{self.class_instance.name} - {self.subject.name}"
 
 
 class StudentClassEnrollment(models.Model):
@@ -83,6 +83,7 @@ class AttendanceSession(models.Model):
         ('closed', 'Closed'),
     ]
     class_subject = models.ForeignKey(ClassSubject, on_delete=models.CASCADE)
+    session_title = models.CharField(max_length=255, blank=True, null=True)
     date = models.DateField()
     started_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, limit_choices_to={'role': 'teacher'})
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='open')
@@ -113,7 +114,7 @@ class AttendanceRecord(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'role': 'student'})
     entry_status = models.CharField(max_length=20, choices=ENTRY_STATUS_CHOICES)
     entry_method = models.CharField(max_length=10, choices=METHOD_CHOICES)
-    entry_time = models.DateTimeField(null=True, blank=True)
+    entry_time = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     exit_status = models.CharField(max_length=20, choices=EXIT_STATUS_CHOICES, null=True, blank=True)
     exit_method = models.CharField(max_length=10, choices=METHOD_CHOICES, null=True, blank=True)
     exit_time = models.DateTimeField(null=True, blank=True)
@@ -144,13 +145,23 @@ class AttendanceReport(models.Model):
         ('class', 'Class'),
         ('subject', 'Subject'),
     ]
+    STATUS_CHOICES = [
+        ('generated', 'Generated'),
+        ('processing', 'Processing'),
+        ('downloaded', 'Downloaded'),
+        ('failed', 'Failed'),
+    ]
+
     generated_by = models.ForeignKey(User, on_delete=models.CASCADE)
     student = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='report_student')
     class_subject = models.ForeignKey(ClassSubject, null=True, blank=True, on_delete=models.SET_NULL)
     from_date = models.DateField()
     to_date = models.DateField()
     report_type = models.CharField(max_length=20, choices=REPORT_TYPE_CHOICES)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='generated')
+    report_file = models.FileField(upload_to='attendance_reports/', null=True, blank=True)
+    title = models.CharField(max_length=255, null=True, blank=True)
     generated_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.report_type} report from {self.from_date} to {self.to_date}"
+        return self.title or f"{self.report_type} report from {self.from_date} to {self.to_date}"
