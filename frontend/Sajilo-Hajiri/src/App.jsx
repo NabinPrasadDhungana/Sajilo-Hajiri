@@ -12,6 +12,7 @@ import StudentHistoryModal from "./components/Dashboard/StudentHistoryModal";
 import Footer from "./components/Footer/Footer";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "./App.css"
+import { authFetch } from "./Helper/Csrf_token";
 
 export default function App() {
 const [currentUser, setCurrentUser] = useState(() => {
@@ -51,14 +52,21 @@ const [currentUser, setCurrentUser] = useState(() => {
     }
   }, []);
 
-  const handleLogout = async () => {
-    await fetch("/api/logout/", {
-      method: "POST",
-      credentials: "include",
-    });
+  // In your handleLogout function (App.jsx)
+const handleLogout = async () => {
+  try {
+    // Refresh CSRF token first
+    await fetch('/api/csrf/', { credentials: 'include' });
+    
+    // Then call logout
+    await authFetch('/api/logout/', { method: 'POST' });
+    
     setCurrentUser(null);
-    localStorage.removeItem("user");
-  };
+    localStorage.removeItem('user');
+  } catch (error) {
+    console.error('Logout failed:', error);
+  }
+};
 
   const handleStudentClick = (student) => {
     setSelectedStudent(student);

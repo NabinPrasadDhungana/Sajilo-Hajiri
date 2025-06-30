@@ -79,16 +79,17 @@ class CSRFTokenView(APIView):
     @method_decorator(ensure_csrf_cookie)
     def get(self, request):
         # Explicitly get and set CSRF token
-        csrf_token = get_token(request)
-        response = JsonResponse({'message': 'CSRF cookie set', 'csrfToken': csrf_token})
-        response.set_cookie(
-            'csrftoken',
-            csrf_token,
-            max_age=60 * 60 * 24 * 7,  # 1 week
-            httponly=False,
-            samesite='Lax',
-            secure=True if request.is_secure() else False
-        )
+        # csrf_token = get_token(request)
+        # response = JsonResponse({'message': 'CSRF cookie set', 'csrfToken': csrf_token})
+        response = JsonResponse({'message': 'CSRF cookie set'})
+        # response.set_cookie(
+        #     'csrftoken',
+        #     csrf_token,
+        #     max_age=60 * 60 * 24 * 7,  # 1 week
+        #     httponly=False,
+        #     samesite='Lax',
+        #     secure=True if request.is_secure() else False
+        # )
         return response
 
 class LogoutView(APIView):
