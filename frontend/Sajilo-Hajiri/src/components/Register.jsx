@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import WebcamCapture from './WebcamCapture';
 import { authFetch } from '../Helper/Csrf_token';
+import { Navigate, useNavigate } from 'react-router-dom';
 
 const Register = (props) => {
+  const navigate = useNavigate();
   // Consolidated form state
   const [formData, setFormData] = useState({
     fullName: '',
@@ -60,6 +62,39 @@ const Register = (props) => {
     }
   }, [formData.role]);
 
+  //This allows the pending users to edit and resubmit their registration form
+  useEffect(() => {
+    const loadUserDataIfEdit = async () => {
+      if (props.editMode) {
+        const res = await authFetch("/api/pending-self-info/", {
+          method: "GET",
+          credentials: "include"
+        });
+        if (res.ok) {
+          const userData = await res.json();
+          setFormData({
+            fullName: userData.name || '',
+            email: userData.email || '',
+            password: '',
+            confirmPassword: '',
+            role: userData.role || 'student',
+            semester: userData.semester || '',
+            section: userData.section || '',
+            department: userData.department || '',
+            collegeRoll: userData.roll_number || ''
+          });
+          if (userData.avatar) {
+            setPhoto(`http://localhost:8000${userData.avatar}`);
+          }
+        }
+      }
+    };
+
+    loadUserDataIfEdit();
+  }, [props.editMode]);
+
+
+
   const validateForm = () => {
     const newErrors = {};
     const { fullName, email, password, confirmPassword, role } = formData;
@@ -93,61 +128,62 @@ const Register = (props) => {
   };
 
 const handleSubmit = async (e) => {
-  e.preventDefault();
-  setMessage('');
-  setIsSubmitting(true);
+    e.preventDefault();
+    setMessage('');
+    setIsSubmitting(true);
 
-  if (!validateForm()) {
-    setIsSubmitting(false);
-    return;
-  }
-
-  try {
-    const formPayload = new FormData();
-    // Append all fields
-    formPayload.append('email', formData.email);
-    formPayload.append('username', formData.email);
-    formPayload.append('name', formData.fullName);
-    formPayload.append('role', formData.role);
-    formPayload.append('password', formData.password);
-
-    if (formData.role === 'student') {
-      formPayload.append('semester', formData.semester);
-      formPayload.append('section', formData.section);
-      formPayload.append('department', formData.department);
-      formPayload.append('roll_number', formData.collegeRoll);
+    if (!validateForm()) {
+      setIsSubmitting(false);
+      return;
     }
 
-    // Handle photo upload
-    const blob = await fetch(photo).then(res => res.blob());
-    formPayload.append('avatar', blob, 'photo.jpg');
+    const user = JSON.parse(localStorage.getItem("user"));
+    const isPendingUser = user && user.approval_status === "pending";
 
-    // Debug: Log FormData contents
-    for (let [key, value] of formPayload.entries()) {
-      console.log(key, value);
+    try {
+      const formPayload = new FormData();
+      formPayload.append('email', formData.email);
+      formPayload.append('username', formData.email);
+      formPayload.append('name', formData.fullName);
+      formPayload.append('role', formData.role);
+      formPayload.append('password', formData.password);
+
+      if (formData.role === 'student') {
+        formPayload.append('semester', formData.semester);
+        formPayload.append('section', formData.section);
+        formPayload.append('department', formData.department);
+        formPayload.append('roll_number', formData.collegeRoll);
+      }
+
+      const blob = await fetch(photo).then(res => res.blob());
+      formPayload.append('avatar', blob, 'photo.jpg');
+
+      const endpoint = isPendingUser ? '/api/update-info/' : '/api/register/';
+      const response = await authFetch(endpoint, {
+        method: 'POST',
+        body: formPayload,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        if (isPendingUser) {
+          setMessage('✅ Your information was updated successfully.');
+          setTimeout(() => navigate('/pending-status'), 1500); // ✅ use navigate
+        } else {
+          setMessage('✅ Registration successful!');
+          setTimeout(() => navigate('/login'), 1500); // ✅ use navigate
+        }
+      } else {
+        throw new Error(data.message || data.error || 'Submission failed');
+      }
+    } catch (error) {
+      console.error('Submission error:', error);
+      setMessage(`❗ ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const response = await authFetch('/api/register/', {
-      method: 'POST',
-      body: formPayload,
-      // DON'T set Content-Type header - FormData sets it automatically with boundary
-    });
-
-    const data = await response.json();
-
-    if (response.ok) {
-      setMessage('✅ Registration successful!');
-      setTimeout(() => window.location.href = '/login', 1500);
-    } else {
-      throw new Error(data.error || 'Registration failed');
-    }
-  } catch (error) {
-    console.error('Registration error:', error);
-    setMessage(`❗ ${error.message || 'Registration failed. Please try again.'}`);
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
   // Helper functions
   const getFieldClasses = (fieldName) => 

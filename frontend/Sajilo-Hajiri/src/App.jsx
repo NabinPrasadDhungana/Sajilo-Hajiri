@@ -1,6 +1,7 @@
 // App.jsx
 import React, { useState, useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import PublicRoute from './components/PublicRoute';
 
 import Navbar from './components/Navbar';
 import Home from './components/Home';
@@ -13,6 +14,8 @@ import Footer from "./components/Footer/Footer";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "./App.css"
 import { authFetch } from "./Helper/Csrf_token";
+import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
+import NotAuthorized from "./components/NotAuthorized";
 
 export default function App() {
   const [adminData, setAdminData] = useState({ stats: {}, pending_users: [] });
@@ -150,21 +153,24 @@ const handleLogout = async () => {
 
       <Routes>
         <Route exact path="/" element={<Home />} />
-        <Route exact path="/register" element={<Register showAlert={(msg) => alert(`${msg}`)} />} />
-        <Route path="/login" element={<Login setCurrentUser={setCurrentUser} />} />
+        <Route exact path="/register" element={<PublicRoute><Register showAlert={(msg) => alert(`${msg}`)} /></PublicRoute>} />
+        <Route path="/login" element={<PublicRoute><Login setCurrentUser={setCurrentUser} /></PublicRoute>} />
         <Route path="/dashboard" element={<Dashboard user={currentUser} />} />
         <Route
           path="/admin"
           element={
-            <AdminPanel
-              stats={adminData.stats}
-              users={adminData.pending_users}
-              approveUser={(email) => handleUserAction(email, "approve")}
-              unapproveUser={(email) => handleUserAction(email, "unapprove")}
-              sendFeedback={sendFeedback}
-            />
+            <ProtectedAdminRoute>
+              <AdminPanel
+                stats={adminData.stats}
+                users={adminData.pending_users}
+                approveUser={(email) => handleUserAction(email, "approve")}
+                unapproveUser={(email) => handleUserAction(email, "unapprove")}
+                sendFeedback={sendFeedback}
+              />
+            </ProtectedAdminRoute>
           }
         />        
+      <Route path="/not-authorized" element={<NotAuthorized />} />
       </Routes>
 
       <Footer />

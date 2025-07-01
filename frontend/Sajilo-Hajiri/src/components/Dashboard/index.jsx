@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminPanel from "../AdminPanel";
 import { authFetch } from "../../Helper/Csrf_token";
+import Register from "../Register";
 // import "./Dashboard.css"
 
 export default function Dashboard({ user }) {
@@ -88,22 +89,25 @@ export default function Dashboard({ user }) {
   if (!data) return <div className="main-content container mt-5"><p>No dashboard data found.</p></div>;
   if (!user) return null; // Already redirected
 
-  if (data.user.approval_status === 'pending') {
+  if (data.user.approval_status === 'pending' /*|| data.user.approval_status === 'unapproved'*/) {
     return (
-      <div className="main-content">
-        <div className="container mt-5">
-          <p className="alert alert-warning">Your account is not approved yet! Please consult your admin. Thank you.</p>
-          
-          {data.user.feedback && (
-            <>
-              <h3 className="text-primary">Feedback:</h3>
-              <p className="text-success">{data.user.feedback}</p>
-            </>
-          )}
+      <div className="main-content container mt-5">
+        <div className="alert alert-warning">
+          Your account is <strong>{data.user.approval_status}</strong>. Please update your info below.
         </div>
+
+        {data.user.feedback && (
+          <div className="alert alert-info">
+            <strong>Admin Feedback:</strong> {data.user.feedback}
+          </div>
+        )}
+
+        {/* Include register form in edit mode */}
+        <Register editMode={true} />
       </div>
     );
   }
+
 
 
   // === Admin View ===

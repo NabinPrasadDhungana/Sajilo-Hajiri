@@ -1,7 +1,9 @@
+from django.views import View
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser
 
 from django.contrib.auth import authenticate, login, logout
 from .models import User, AttendanceRecord, Subject, ClassSubject, StudentClassEnrollment
@@ -14,6 +16,11 @@ from .permissions import IsCustomAdmin
 from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
+
+from django.views.decorators.csrf import csrf_protect
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods
+
 
 class RegisterUserView(APIView):
     permission_classes = [AllowAny]
@@ -34,6 +41,45 @@ class RegisterUserView(APIView):
              'user_id': user.id }, 
             status=status.HTTP_201_CREATED
         )
+    
+class UpdatePendingUserInfoView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]  # Support file uploads (avatar)
+
+    def post(self, request):
+        user = request.user
+
+        if user.approval_status != 'pending':
+            return Response({"error": "Only pending users can update their info."}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            data = request.data
+
+            user.name = data.get('name', user.name)
+            user.email = data.get('email', user.email)
+            user.username = data.get('username', user.username)
+            user.role = data.get('role', user.role)
+
+            if user.role == 'student':
+                user.semester = data.get('semester', user.semester)
+                user.section = data.get('section', user.section)
+                user.department = data.get('department', user.department)
+                user.roll_number = data.get('roll_number', user.roll_number)
+
+            if 'avatar' in request.FILES:
+                user.avatar = request.FILES['avatar']
+
+            # Reset approval state and feedback
+            user.approval_status = 'pending'
+            user.feedback = None
+
+            user.save()
+
+            return Response({'message': '✅ Your information has been updated and sent for review.'})
+
+        except Exception as e:
+            print("Update error:", e)
+            return Response({'error': 'Something went wrong. Please try again later.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 class LoginView(APIView):
     permission_classes = [AllowAny]
@@ -113,6 +159,19 @@ class PendingUsersAPIView(APIView):
         pending_users = User.objects.filter(approval_status='pending')
         serializer = UserSerializer(pending_users, many=True)
         return Response(serializer.data)
+    
+class PendingUserSelfView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        if user.approval_status != 'pending':
+            return Response({'error': 'Only pending users can access this data.'}, status=403)
+
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
 
 
 class UserApprovalAPIView(APIView):
