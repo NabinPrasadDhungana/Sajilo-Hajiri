@@ -1,24 +1,19 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, permissions
-from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 
 from django.contrib.auth import authenticate, login, logout
 from .models import User, AttendanceRecord, Subject, ClassSubject, StudentClassEnrollment
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, AdminUserReviewSerializer, AttendanceRecordSerializer, SubjectSerializer, UserSerializer
-import os
-from django.db.models import Prefetch
 from django.utils.timezone import localtime
 from rest_framework.permissions import AllowAny
 
 from .permissions import IsCustomAdmin 
 
-# from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
-from django.middleware.csrf import get_token
 
 class RegisterUserView(APIView):
     permission_classes = [AllowAny]
@@ -61,11 +56,11 @@ class LoginView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED
             )
         
-        if user.approval_status != 'approved':
-            return Response(
-                {'error': 'Your account is not approved yet.'}, 
-                status=status.HTTP_403_FORBIDDEN
-            )
+        # if user.approval_status != 'approved':
+        #     return Response(
+        #         {'error': 'Your account is not approved yet.'}, 
+        #         status=status.HTTP_403_FORBIDDEN
+        #     )
         
         # Session-based login
         login(request, user)  # This handles session creation
@@ -99,34 +94,64 @@ class LogoutView(APIView):
         response.delete_cookie('sessionid')
         return response
 
-
-class AdminReviewUserView(APIView):
+class AdminStatsAPIView(APIView):
     permission_classes = [IsCustomAdmin]
 
-    def post(self, request, user_id):
+    def get(self, request):
+        return Response({
+            "total_users": User.objects.count(),
+            "total_students": User.objects.filter(role='student').count(),
+            "total_teachers": User.objects.filter(role='teacher').count(),
+            "total_pending": User.objects.filter(approval_status='pending').count(),
+        })
+
+
+class PendingUsersAPIView(APIView):
+    permission_classes = [IsCustomAdmin]
+
+    def get(self, request):
+        pending_users = User.objects.filter(approval_status='pending')
+        serializer = UserSerializer(pending_users, many=True)
+        return Response(serializer.data)
+
+
+class UserApprovalAPIView(APIView):
+    permission_classes = [IsCustomAdmin]
+
+    def post(self, request):
+        email = request.data.get("email")
+        action = request.data.get("action")  # 'approve' or 'unapprove'
+
         try:
-            user = User.objects.get(id=user_id)
+            user = User.objects.get(email=email)
+            if action == "approve":
+                user.approval_status = 'approved'
+                user.feedback = ''
+            elif action == "unapprove":
+                user.approval_status = 'unapproved'
+            else:
+                return Response({"error": "Invalid action"}, status=400)
+            user.save()
+            return Response({"message": f"User {action}d successfully."})
         except User.DoesNotExist:
-            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "User not found"}, status=404)
 
-        serializer = AdminUserReviewSerializer(user, data=request.data, partial=True)
-        if serializer.is_valid():
-            prev_status = user.approval_status
-            serializer.save()
 
-            if prev_status == 'pending' and serializer.validated_data['approval_status'] == 'unapproved':     # only delete if going from pending → unapproved
-                # Delete avatar if exists
-                if user.avatar and os.path.isfile(user.avatar.path):
-                    os.remove(user.avatar.path)
-                user.delete()
-                return Response({'message': 'User unapproved and deleted'}, status=status.HTTP_200_OK)
+class SendFeedbackAPIView(APIView):
+    permission_classes = [IsCustomAdmin]
 
-            if serializer.validated_data['approval_status'] == 'approved':
-                return Response({'message': 'User approved successfully'}, status=status.HTTP_200_OK)
+    def post(self, request):
+        email = request.data.get("email")
+        feedback = request.data.get("feedback")
 
-            return Response({'message': 'User feedback added'}, status=status.HTTP_200_OK)
+        try:
+            user = User.objects.get(email=email)
+            user.feedback = feedback
+            user.save()
+            return Response({"message": "Feedback sent successfully."})
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 # @method_decorator(ensure_csrf_cookie, name='dispatch')
 class DashboardAPIView(APIView):
@@ -192,16 +217,16 @@ class DashboardAPIView(APIView):
 
         return { "teaching": teaching_data }
 
-    def _get_admin_data(self, user):
-        pending_users = User.objects.filter(approval_status='pending')
-        return {
-            "stats": {
-                "total_users": User.objects.count(),
-                "total_students": User.objects.filter(role='student').count(),
-                "total_teachers": User.objects.filter(role='teacher').count(),
-                "pending_users": UserSerializer(pending_users, many=True).data,
-            }
-        }
+    # def _get_admin_data(self, user):
+    #     pending_users = User.objects.filter(approval_status='pending')
+    #     return {
+    #         "stats": {
+    #             "total_users": User.objects.count(),
+    #             "total_students": User.objects.filter(role='student').count(),
+    #             "total_teachers": User.objects.filter(role='teacher').count(),
+    #             "pending_users": UserSerializer(pending_users, many=True).data,
+    #         }
+    #     }
     
 class StudentAttendanceView(APIView):
     permission_classes = [IsAuthenticated]

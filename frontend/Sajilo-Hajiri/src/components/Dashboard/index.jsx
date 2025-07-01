@@ -83,10 +83,28 @@ export default function Dashboard({ user }) {
 
 
   // Loading and error states
-  if (loading) return <div className="container mt-5"><p>Loading dashboard...</p></div>;
-  if (error) return <div className="container mt-5 alert alert-danger">Error: {error}</div>;
-  if (!data) return <div className="container mt-5"><p>No dashboard data found.</p></div>;
+  if (loading) return <div className="main-content container mt-5"><p>Loading dashboard...</p></div>;
+  if (error) return <div className="main-content container mt-5 alert alert-danger">Error: {error}</div>;
+  if (!data) return <div className="main-content container mt-5"><p>No dashboard data found.</p></div>;
   if (!user) return null; // Already redirected
+
+  if (data.user.approval_status === 'pending') {
+    return (
+      <div className="main-content">
+        <div className="container mt-5">
+          <p className="alert alert-warning">Your account is not approved yet! Please consult your admin. Thank you.</p>
+          
+          {data.user.feedback && (
+            <>
+              <h3 className="text-primary">Feedback:</h3>
+              <p className="text-success">{data.user.feedback}</p>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
 
   // === Admin View ===
   if (user.role === "admin") {

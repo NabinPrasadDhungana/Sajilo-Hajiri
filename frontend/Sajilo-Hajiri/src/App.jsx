@@ -15,10 +15,11 @@ import "./App.css"
 import { authFetch } from "./Helper/Csrf_token";
 
 export default function App() {
-const [currentUser, setCurrentUser] = useState(() => {
-  const savedUser = localStorage.getItem("user");
-  return savedUser ? JSON.parse(savedUser) : null;
-});
+  const [adminData, setAdminData] = useState({ stats: {}, pending_users: [] });
+  const [currentUser, setCurrentUser] = useState(() => {
+    const savedUser = localStorage.getItem("user");
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
 
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [notifications, setNotifications] = useState([]);
@@ -45,12 +46,45 @@ const [currentUser, setCurrentUser] = useState(() => {
       credentials: "include",
     });
 
-    // Optional: Restore session from localStorage
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
       setCurrentUser(JSON.parse(savedUser));
     }
   }, []);
+
+  useEffect(() => {
+    if (currentUser?.role === "admin") {
+      Promise.all([
+        fetch("/api/admin/stats/", { credentials: "include" }).then(res => res.json()),
+        fetch("/api/admin/pending-users/", { credentials: "include" }).then(res => res.json())
+      ]).then(([stats, pending_users]) => {
+        setAdminData({ stats, pending_users });
+      });
+    }
+  }, [currentUser]);
+
+
+  // helper functions for admin
+  const handleUserAction = async (email, action) => {
+    await fetch("/api/admin/user-approval/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email, action })
+    });
+    window.location.reload(); // or refresh the data manually
+  };
+
+  const sendFeedback = async (email, feedback) => {
+    await fetch("/api/admin/send-feedback/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email, feedback })
+    });
+    window.location.reload();
+  };
+
 
   // In your handleLogout function (App.jsx)
 const handleLogout = async () => {
@@ -106,21 +140,6 @@ const handleLogout = async () => {
     }
   };
 
-  const sendFeedback = (email, message) => {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.email === email ? { ...u, notification: message } : u
-      )
-    );
-    const user = users.find((u) => u.email === email);
-    if (user) {
-      setNotifications((prev) => [
-        ...prev,
-        `Feedback sent to ${user.fullName}: "${message}"`
-      ]);
-    }
-  };
-
   return (
     <BrowserRouter>
       <Navbar
@@ -135,17 +154,17 @@ const handleLogout = async () => {
         <Route path="/login" element={<Login setCurrentUser={setCurrentUser} />} />
         <Route path="/dashboard" element={<Dashboard user={currentUser} />} />
         <Route
-          exact
           path="/admin"
           element={
             <AdminPanel
-              users={users}
-              approveUser={approveUser}
-              unapproveUser={unapproveUser}
+              stats={adminData.stats}
+              users={adminData.pending_users}
+              approveUser={(email) => handleUserAction(email, "approve")}
+              unapproveUser={(email) => handleUserAction(email, "unapprove")}
               sendFeedback={sendFeedback}
             />
           }
-        />
+        />        
       </Routes>
 
       <Footer />

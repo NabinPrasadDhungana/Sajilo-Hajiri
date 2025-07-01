@@ -17,7 +17,7 @@ const AdminPanel = ({ stats, users, approveUser, unapproveUser, sendFeedback }) 
   };
 
   return (
-    <div className="container mt-5">
+    <div className="main-content container mt-5">
       <h2 className="mb-4">Admin Panel - Manage Users</h2>
 
       {/* Stats Section */}
@@ -40,7 +40,15 @@ const AdminPanel = ({ stats, users, approveUser, unapproveUser, sendFeedback }) 
             <p>{stats.total_teachers}</p>
           </div>
         </div>
+        <div className="col">
+          <div className="card bg-light p-3">
+            <h5>Total Pending</h5>
+            <p>{users.length}</p>
+          </div>
+        </div>
       </div>
+
+      {console.log(users)}
 
       {/* Pending Users Table */}
       {users.length === 0 ? (
@@ -51,9 +59,11 @@ const AdminPanel = ({ stats, users, approveUser, unapproveUser, sendFeedback }) 
             <tr>
               <th>Name</th>
               <th>Email</th>
+              <th>Image URL</th>
               <th>Role</th>
+              <th>Roll Number</th>
               <th>Status</th>
-              <th>Notification</th>
+              <th>Feedback</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -62,11 +72,15 @@ const AdminPanel = ({ stats, users, approveUser, unapproveUser, sendFeedback }) 
               <tr key={user.email}>
                 <td>{user.name || "N/A"}</td>
                 <td>{user.email}</td>
+                <td>{user.avatar}</td>
                 <td>
                   <span className={`badge ${user.role === "teacher" ? "bg-info text-dark" : "bg-primary"}`}>
                     {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                   </span>
                 </td>
+
+                <td>{user.roll_number}</td>
+
                 <td>
                   <strong style={{ color: user.approval_status === "approved" ? "green" : user.approval_status === "unapproved" ? "red" : "orange" }}>
                     {user.approval_status || "pending"}
