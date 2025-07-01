@@ -17,6 +17,10 @@ class User(AbstractUser):
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     name = models.CharField(max_length=150, blank=True, null=True)
     roll_number = models.CharField(max_length=10, unique=True, null=True, blank=True)  # Use CharField (final version)
+    # the following 3 are the latest fields added for user to make registration editable
+    semester = models.CharField(max_length=20, blank=True, null=True)
+    section = models.CharField(max_length=20, blank=True, null=True)
+    department = models.CharField(max_length=50, blank=True, null=True)
     approval_status = models.CharField(max_length=15, choices=APPROVAL_CHOICES, default='pending')
     feedback = models.TextField(blank=True, null=True)  # feedback if unapproved
 
