@@ -169,7 +169,7 @@ const handleSubmit = async (e) => {
       if (response.ok) {
         if (isPendingUser) {
           setMessage('✅ Your information was updated successfully.');
-          setTimeout(() => navigate('/pending-status'), 1500); // ✅ use navigate
+          setTimeout(() => window.location.href = '/dashboard', 1000);
         } else {
           setMessage('✅ Registration successful!');
           setTimeout(() => navigate('/login'), 1500); // ✅ use navigate
@@ -193,7 +193,7 @@ const handleSubmit = async (e) => {
     switch (field) {
       case 'semester':
         return [...Array(8)].map((_, i) => (
-          <option key={i+1} value={`Semester ${i+1}`}>Semester {i+1}</option>
+          <option key={i+1} value={i+1}>Semester {i+1}</option>
         ));
       case 'section':
         return ['Morning', 'Day'].map(opt => (

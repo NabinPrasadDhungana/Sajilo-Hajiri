@@ -1,67 +1,92 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../../Helper/Csrf_token';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import './Login.css';
 
 const Login = ({ setCurrentUser }) => {
-  const [formData, setFormData] = useState({
-    username: '',
-    password: ''
-  });
-  const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Ensure CSRF cookie is set
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    remember: false
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [forgotMode, setForgotMode] = useState(false);
+
   useEffect(() => {
-    fetch('/api/csrf/', { 
-      credentials: 'include' 
-    }).catch(err => {
-      console.error('CSRF fetch error:', err);
-    });
+    fetch('/api/csrf/', { credentials: 'include' });
+
+    const savedEmail = localStorage.getItem('rememberedEmail');
+    if (savedEmail) {
+      setFormData(prev => ({ ...prev, email: savedEmail, remember: true }));
+    }
   }, []);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
+  };
+
+  const validateForm = () => {
+    const { email, password } = formData;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      toast.warn("⚠️ Please enter a valid email");
+      return false;
+    }
+    if (!forgotMode && (!password || password.length < 6)) {
+      toast.warn("⚠️ Password must be at least 6 characters");
+      return false;
+    }
+    return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage('');
+    if (!validateForm()) return;
     setLoading(true);
 
     try {
-      const response = await authFetch('/api/login/', {
+      const endpoint = forgotMode ? '/api/forgot-password/' : '/api/login/';
+      const response = await authFetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: formData.username,
-          password: formData.password
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: formData.email, password: formData.password }),
       });
 
       const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Something went wrong');
 
-      // Handle successful login
+      if (forgotMode) {
+        toast.success("📩 Password reset instructions sent to your email");
+        setForgotMode(false);
+        return;
+      }
+
+      if (formData.remember) {
+        localStorage.setItem('rememberedEmail', formData.email);
+      } else {
+        localStorage.removeItem('rememberedEmail');
+      }
+
       setCurrentUser(data.user);
       localStorage.setItem('user', JSON.stringify(data.user));
-      navigate('/dashboard');
+      toast.success("✅ Login successful");
 
-    } catch (error) {
-      console.error('Login error:', error);
-      
-      // Enhanced error messages based on your Django responses
-      setMessage(
-        error.message.includes('credentials') ? '❌ Invalid username or password' :
-        error.message.includes('approved') ? '⚠️ Account not approved yet' :
-        '❗ Login failed. Please try again.'
-      );
+      setTimeout(() => {
+        navigate(data.user.role === 'admin' ? '/admin' : '/dashboard');
+      }, 1000);
+
+    } catch (err) {
+      toast.error(err.message.includes('credentials') ? "❌ Invalid credentials" : "❗ Login failed");
     } finally {
       setLoading(false);
     }
@@ -69,58 +94,73 @@ const Login = ({ setCurrentUser }) => {
 
   return (
     <div className="login-wrapper">
+      <ToastContainer position="top-right" autoClose={2500} />
       <div className="login-form-container">
-        <h2>Login</h2>
+        <h2>{forgotMode ? 'Forgot Password' : 'Login'}</h2>
+
         <form onSubmit={handleSubmit} className="login-form">
           <div className="input-with-icon">
-            <span className="icon" role="img" aria-label="username">👤</span>
+            <span className="icon">📧</span>
             <input
-              type="text"
-              name="username"
-              placeholder="Email"
-              value={formData.username}
+              type="email"
+              name="email"
+              placeholder="Email address"
+              value={formData.email}
               onChange={handleChange}
               required
-              autoComplete="username"
             />
           </div>
 
-          <div className="input-with-icon">
-            <span className="icon" role="img" aria-label="password">🔒</span>
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              minLength={6}
-              autoComplete="current-password"
-            />
-          </div>
+          {!forgotMode && (
+            <div className="input-with-icon">
+              <span className="icon">🔒</span>
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Password"
+                value={formData.password}
+                onChange={handleChange}
+                minLength={6}
+                required
+              />
+              <span
+                className="toggle-password"
+                onClick={() => setShowPassword((prev) => !prev)}
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </span>
+            </div>
+          )}
 
-          <button 
-            type="submit" 
-            disabled={loading}
-            className={loading ? 'loading' : ''}
-          >
-            {loading ? (
-              <>
-                <span className="spinner"></span>
-                Logging in...
-              </>
-            ) : 'Login'}
+          {!forgotMode && (
+            <div className="form-check mb-2">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                name="remember"
+                checked={formData.remember}
+                onChange={handleChange}
+                id="remember"
+              />
+              <label className="form-check-label" htmlFor="remember">
+                Remember me
+              </label>
+            </div>
+          )}
+
+          <button type="submit" disabled={loading} className={loading ? 'loading' : ''}>
+            {loading ? (forgotMode ? 'Sending...' : 'Logging in...') : (forgotMode ? 'Send Reset Link' : 'Login')}
           </button>
         </form>
 
-        {message && (
-          <div className={`alert mt-3 ${
-            message.startsWith('❌') ? 'alert-danger' :
-            message.startsWith('⚠️') ? 'alert-warning' : 'alert-info'
-          }`}>
-            {message}
-          </div>
-        )}
+        <div className="text-center mt-3">
+          <button
+            className="btn btn-link"
+            onClick={() => setForgotMode((prev) => !prev)}
+          >
+            {forgotMode ? '← Back to Login' : 'Forgot Password?'}
+          </button>
+        </div>
       </div>
     </div>
   );

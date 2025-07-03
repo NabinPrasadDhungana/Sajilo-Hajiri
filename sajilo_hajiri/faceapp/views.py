@@ -13,6 +13,8 @@ from rest_framework.permissions import AllowAny
 
 from .permissions import IsCustomAdmin 
 
+from django.middleware.csrf import get_token
+
 from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -102,12 +104,6 @@ class LoginView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED
             )
         
-        # if user.approval_status != 'approved':
-        #     return Response(
-        #         {'error': 'Your account is not approved yet.'}, 
-        #         status=status.HTTP_403_FORBIDDEN
-        #     )
-        
         # Session-based login
         login(request, user)  # This handles session creation
         
@@ -120,17 +116,16 @@ class CSRFTokenView(APIView):
     @method_decorator(ensure_csrf_cookie)
     def get(self, request):
         # Explicitly get and set CSRF token
-        # csrf_token = get_token(request)
-        # response = JsonResponse({'message': 'CSRF cookie set', 'csrfToken': csrf_token})
-        response = JsonResponse({'message': 'CSRF cookie set'})
-        # response.set_cookie(
-        #     'csrftoken',
-        #     csrf_token,
-        #     max_age=60 * 60 * 24 * 7,  # 1 week
-        #     httponly=False,
-        #     samesite='Lax',
-        #     secure=True if request.is_secure() else False
-        # )
+        csrf_token = get_token(request)
+        response = JsonResponse({'message': 'CSRF cookie set', 'csrfToken': csrf_token})
+        response.set_cookie(
+            'csrftoken',
+            csrf_token,
+            max_age=60 * 60 * 24 * 7,  # 1 week
+            httponly=False,
+            samesite='Lax',
+            secure=True if request.is_secure() else False
+        )
         return response
 
 class LogoutView(APIView):
@@ -139,6 +134,19 @@ class LogoutView(APIView):
         response = Response({'message': 'Logged out successfully'})
         response.delete_cookie('sessionid')
         return response
+    
+class ForgotPasswordView(APIView):
+    def post(self, request, *args, **kwargs):
+        email = request.data.get("username")
+        if not email:
+            return Response({'error': 'Email is required'}, status=400)
+
+        # Optionally check if user exists
+        if not User.objects.filter(email=email).exists():
+            return Response({'error': 'User not found'}, status=404)
+
+        # Here you can trigger email sending logic (like password reset)
+        return Response({'message': 'Reset link sent to email.'})
 
 class AdminStatsAPIView(APIView):
     permission_classes = [IsCustomAdmin]
@@ -173,7 +181,7 @@ class PendingUserSelfView(APIView):
         return Response(serializer.data)
 
 
-
+@method_decorator(csrf_protect, name='dispatch')
 class UserApprovalAPIView(APIView):
     permission_classes = [IsCustomAdmin]
 
@@ -195,7 +203,7 @@ class UserApprovalAPIView(APIView):
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=404)
 
-
+@method_decorator(csrf_protect, name='dispatch')
 class SendFeedbackAPIView(APIView):
     permission_classes = [IsCustomAdmin]
 
@@ -225,7 +233,6 @@ class DashboardAPIView(APIView):
             "user": UserSerializer(user).data,
             "student_data": self._get_student_data(user) if role == 'student' else None,
             "teacher_data": self._get_teacher_data(user) if role == 'teacher' else None,
-            "admin_data": self._get_admin_data(user) if role == 'admin' else None,
         }
         return Response(data)
 

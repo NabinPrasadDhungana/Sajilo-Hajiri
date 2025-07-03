@@ -71,7 +71,7 @@ class TeachingClassSerializer(serializers.Serializer):
 class UserRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username', 'email', 'name', 'role', 'roll_number', 'avatar', 'password']
+        fields = ['username', 'email', 'name', 'role', 'roll_number', 'avatar', 'password', 'semester', 'department', 'section']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
@@ -80,6 +80,9 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             email=validated_data['email'],
             name=validated_data.get('name'),
             role=validated_data['role'],
+            semester=validated_data.get('semester'),
+            section=validated_data.get('section'),
+            department=validated_data.get('department'),
             roll_number=validated_data.get('roll_number'),
             avatar=validated_data.get('avatar'),
             password=validated_data['password'],

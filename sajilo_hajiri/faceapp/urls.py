@@ -6,6 +6,7 @@ urlpatterns = [
     path('update-info/', UpdatePendingUserInfoView.as_view(), name='update_user_info'),
     path('login/', LoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
+    path('forgot-password/', ForgotPasswordView.as_view(), name='forgot-password'),
     path('pending-self-info/', PendingUserSelfView.as_view(), name='pending_user_self_info'),
     path('admin/stats/', AdminStatsAPIView.as_view(), name='admin-stats'),
     path('admin/pending-users/', PendingUsersAPIView.as_view(), name='pending-users'),

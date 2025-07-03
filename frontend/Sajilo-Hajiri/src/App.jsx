@@ -69,7 +69,7 @@ export default function App() {
 
   // helper functions for admin
   const handleUserAction = async (email, action) => {
-    await fetch("/api/admin/user-approval/", {
+    await fetch("/api/admin/approve-user/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -160,13 +160,7 @@ const handleLogout = async () => {
           path="/admin"
           element={
             <ProtectedAdminRoute>
-              <AdminPanel
-                stats={adminData.stats}
-                users={adminData.pending_users}
-                approveUser={(email) => handleUserAction(email, "approve")}
-                unapproveUser={(email) => handleUserAction(email, "unapprove")}
-                sendFeedback={sendFeedback}
-              />
+              <AdminPanel user={currentUser}/>
             </ProtectedAdminRoute>
           }
         />        
