@@ -16,6 +16,9 @@ import "./App.css"
 import { authFetch } from "./Helper/Csrf_token";
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 import NotAuthorized from "./components/NotAuthorized";
+import PasswordResetForm from './components/Login/PasswordResetForm';
+import ForgotPasswordForm from './components/Login/ForgotPasswordForm';
+
 
 export default function App() {
   const [adminData, setAdminData] = useState({ stats: {}, pending_users: [] });
@@ -164,7 +167,9 @@ const handleLogout = async () => {
             </ProtectedAdminRoute>
           }
         />        
-      <Route path="/not-authorized" element={<NotAuthorized />} />
+        <Route path="/not-authorized" element={<NotAuthorized />} />
+        <Route path="/forgot-password" element={<ForgotPasswordForm />} />
+        <Route path="/reset-password/:uidb64/:token" element={<PasswordResetForm />} />
       </Routes>
 
       <Footer />

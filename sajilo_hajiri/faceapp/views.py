@@ -20,8 +20,16 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from django.views.decorators.csrf import csrf_protect
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_http_methods
+
+from django.core.mail import send_mail
+from django.contrib.auth import get_user_model
+from django.conf import settings
+from django.contrib.sites.shortcuts import get_current_site
+from django.contrib.auth.tokens import default_token_generator
+from django.urls import reverse
+from django.utils.http import urlsafe_base64_encode
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_bytes
 
 
 class RegisterUserView(APIView):
@@ -135,18 +143,76 @@ class LogoutView(APIView):
         response.delete_cookie('sessionid')
         return response
     
+User = get_user_model()
+    
 class ForgotPasswordView(APIView):
     def post(self, request, *args, **kwargs):
         email = request.data.get("username")
+
         if not email:
             return Response({'error': 'Email is required'}, status=400)
 
-        # Optionally check if user exists
-        if not User.objects.filter(email=email).exists():
-            return Response({'error': 'User not found'}, status=404)
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'error': 'User with this email does not exist.'}, status=404)
 
-        # Here you can trigger email sending logic (like password reset)
-        return Response({'message': 'Reset link sent to email.'})
+        # Generate password reset token and uid
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        current_site = get_current_site(request).domain
+        reset_path = reverse('reset-password', kwargs={'uidb64': uid, 'token': token})
+        reset_url = f"http://{current_site}{reset_path}"
+
+        # Send email
+        send_mail(
+            subject="Password Reset for Sajilo Hajiri",
+            message=f"Hi {user.name},\n\nClick the link below to reset your password:\n{reset_url}\n\nIf you did not request this, please ignore this email.",
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+
+        return Response({'message': '✅ Password reset link sent to your email.'}, status=200)
+    
+class VerifyTokenView(APIView):
+    def post(self, request):
+        uidb64 = request.data.get("uid")
+        token = request.data.get("token")
+
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({"error": "Invalid link"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if default_token_generator.check_token(user, token):
+            return Response({"message": "Token is valid"})
+        else:
+            return Response({"error": "Token is invalid or expired"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class SetNewPasswordView(APIView):
+    def post(self, request):
+        uidb64 = request.data.get("uid")
+        token = request.data.get("token")
+        new_password = request.data.get("password")
+
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({"error": "Invalid user"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not default_token_generator.check_token(user, token):
+            return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.save()
+
+        return Response({"message": "Password updated successfully"}, status=status.HTTP_200_OK)
+
+
 
 class AdminStatsAPIView(APIView):
     permission_classes = [IsCustomAdmin]

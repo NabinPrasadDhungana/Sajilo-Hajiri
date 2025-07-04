@@ -145,3 +145,11 @@ CSRF_COOKIE_SECURE = False
 
 CORS_EXPOSE_HEADERS = ['X-CSRFToken']
 CSRF_COOKIE_HTTPONLY = False  # So JavaScript can read it
+
+# Settings for sending email
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'prnabin123@gmail.com'
+EMAIL_HOST_PASSWORD = 'rpvd fowc mddt hxwa'
