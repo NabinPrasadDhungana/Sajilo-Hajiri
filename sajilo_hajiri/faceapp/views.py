@@ -6,8 +6,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
 
 from django.contrib.auth import authenticate, login, logout
-from .models import User, AttendanceRecord, Subject, ClassSubject, StudentClassEnrollment
-from .serializers import UserRegistrationSerializer, UserLoginSerializer, AdminUserReviewSerializer, AttendanceRecordSerializer, SubjectSerializer, UserSerializer
+from .models import *
+from .serializers import *
 from django.utils.timezone import localtime
 from rest_framework.permissions import AllowAny
 
@@ -30,6 +30,8 @@ from django.urls import reverse
 from django.utils.http import urlsafe_base64_encode
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_bytes
+
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 
 
 class RegisterUserView(APIView):
@@ -359,6 +361,292 @@ class DashboardAPIView(APIView):
     #             "pending_users": UserSerializer(pending_users, many=True).data,
     #         }
     #     }
+class UserListView(APIView):
+    permission_classes = [IsCustomAdmin]
+
+    def get(self, request):
+        users = User.objects.all()
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
+
+class CreateClassView(APIView):
+    permission_classes = [IsCustomAdmin]
+
+    def post(self, request):
+        data = request.data
+        class_obj = Class.objects.create(
+            name=data['name'],
+            year=data['year'],
+            semester=data['semester'],
+            department=data['department']
+        )
+        return Response({"message": "Class created", "id": class_obj.id}, status=201)
+
+class CreateSubjectView(APIView):
+    permission_classes = [IsCustomAdmin]
+
+    def post(self, request):
+        data = request.data
+        subject = Subject.objects.create(name=data['name'], code=data['code'])
+        return Response({"message": "Subject created", "id": subject.id}, status=201)
+
+class AssignTeacherView(APIView):
+    permission_classes = [IsCustomAdmin]
+
+    def post(self, request):
+        data = request.data
+        try:
+            teacher = User.objects.get(pk=data['teacher'], role='teacher')
+            class_instance = Class.objects.get(pk=data['class_instance'])
+            subject = Subject.objects.get(pk=data['subject'])
+            class_subject = ClassSubject.objects.create(
+                teacher=teacher,
+                class_instance=class_instance,
+                subject=subject
+            )
+            return Response({"message": "Teacher assigned", "id": class_subject.id}, status=201)
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)
+            
+class EnrollStudentView(APIView):
+    permission_classes = [IsCustomAdmin]
+
+    def post(self, request):
+        data = request.data
+        try:
+            student = User.objects.get(pk=data['student'], role='student')
+            enrolled_class = Class.objects.get(pk=data['enrolled_class'])
+            enrollment, created = StudentClassEnrollment.objects.get_or_create(
+                student=student,
+                enrolled_class=enrolled_class
+            )
+            if created:
+                return Response({"message": "Student enrolled"}, status=201)
+            else:
+                return Response({"message": "Student already enrolled"}, status=200)
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)
+
+# Supportive API endpoints to fetch users/classes/subjects
+class ListTeachers(APIView):
+    permission_classes = [IsCustomAdmin]
+
+    def get(self, request):
+        teachers = User.objects.filter(role='teacher').values('id', 'name')
+        return Response(list(teachers))
+
+class ListStudents(APIView):
+    permission_classes = [IsCustomAdmin]
+
+    def get(self, request):
+        students = User.objects.filter(role='student').values('id', 'name')
+        return Response(list(students))
+
+class ListClasses(APIView):
+    permission_classes = [IsCustomAdmin]
+
+    def get(self, request):
+        classes = Class.objects.all().values('id', 'name')
+        return Response(list(classes))
+
+class ListSubjects(APIView):
+    permission_classes = [IsCustomAdmin]
+
+    def get(self, request):
+        subjects = Subject.objects.all().values('id', 'name')
+        return Response(list(subjects))
+    
+# Class CRUD Operations
+class ClassDetailView(APIView):
+    permission_classes = [IsCustomAdmin]
+
+    def get(self, request, pk):
+        try:
+            class_obj = Class.objects.get(pk=pk)
+            serializer = ClassSerializer(class_obj)
+            return Response(serializer.data)
+        except Class.DoesNotExist:
+            return Response({"error": "Class not found"}, status=404)
+
+    def put(self, request, pk):
+        try:
+            class_obj = Class.objects.get(pk=pk)
+            serializer = ClassSerializer(class_obj, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=400)
+        except Class.DoesNotExist:
+            return Response({"error": "Class not found"}, status=404)
+
+    def delete(self, request, pk):
+        try:
+            class_obj = Class.objects.get(pk=pk)
+            class_obj.delete()
+            return Response({"message": "Class deleted successfully"})
+        except Class.DoesNotExist:
+            return Response({"error": "Class not found"}, status=404)
+
+# Subject CRUD Operations
+class SubjectDetailView(APIView):
+    permission_classes = [IsCustomAdmin]
+
+    def get(self, request, pk):
+        try:
+            subject = Subject.objects.get(pk=pk)
+            serializer = SubjectSerializer(subject)
+            return Response(serializer.data)
+        except Subject.DoesNotExist:
+            return Response({"error": "Subject not found"}, status=404)
+
+    def put(self, request, pk):
+        try:
+            subject = Subject.objects.get(pk=pk)
+            serializer = SubjectSerializer(subject, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=400)
+        except Subject.DoesNotExist:
+            return Response({"error": "Subject not found"}, status=404)
+
+    def delete(self, request, pk):
+        try:
+            subject = Subject.objects.get(pk=pk)
+            subject.delete()
+            return Response({"message": "Subject deleted successfully"})
+        except Subject.DoesNotExist:
+            return Response({"error": "Subject not found"}, status=404)
+
+# Assignment CRUD Operations
+class AssignmentListView(APIView):
+    permission_classes = [IsCustomAdmin]
+
+    def get(self, request):
+        assignments = ClassSubject.objects.all()
+        serializer = ClassSubjectSerializer(assignments, many=True)
+        return Response(serializer.data)
+
+class AssignmentDetailView(APIView):
+    permission_classes = [IsCustomAdmin]
+
+    def get(self, request, pk):
+        try:
+            assignment = ClassSubject.objects.get(pk=pk)
+            serializer = ClassSubjectSerializer(assignment)
+            return Response(serializer.data)
+        except ClassSubject.DoesNotExist:
+            return Response({"error": "Assignment not found"}, status=404)
+
+    def put(self, request, pk):
+        try:
+            assignment = ClassSubject.objects.get(pk=pk)
+            serializer = ClassSubjectSerializer(assignment, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=400)
+        except ClassSubject.DoesNotExist:
+            return Response({"error": "Assignment not found"}, status=404)
+
+    def delete(self, request, pk):
+        try:
+            assignment = ClassSubject.objects.get(pk=pk)
+            assignment.delete()
+            return Response({"message": "Assignment deleted successfully"})
+        except ClassSubject.DoesNotExist:
+            return Response({"error": "Assignment not found"}, status=404)
+
+# Enrollment CRUD Operations
+class EnrollmentListView(APIView):
+    permission_classes = [IsCustomAdmin]
+
+    def get(self, request):
+        enrollments = StudentClassEnrollment.objects.all()
+        serializer = StudentClassEnrollmentSerializer(enrollments, many=True)
+        return Response(serializer.data)
+
+class EnrollmentDetailView(APIView):
+    permission_classes = [IsCustomAdmin]
+
+    def get(self, request, pk):
+        try:
+            enrollment = StudentClassEnrollment.objects.get(pk=pk)
+            serializer = StudentClassEnrollmentSerializer(enrollment)
+            return Response(serializer.data)
+        except StudentClassEnrollment.DoesNotExist:
+            return Response({"error": "Enrollment not found"}, status=404)
+
+    def delete(self, request, pk):
+        try:
+            enrollment = StudentClassEnrollment.objects.get(pk=pk)
+            enrollment.delete()
+            return Response({"message": "Enrollment deleted successfully"})
+        except StudentClassEnrollment.DoesNotExist:
+            return Response({"error": "Enrollment not found"}, status=404)
+
+# User Management Operations
+class UserDetailView(APIView):
+    permission_classes = [IsCustomAdmin]
+
+    def get(self, request, pk):
+        try:
+            user = User.objects.get(pk=pk)
+            serializer = UserSerializer(user)
+            return Response(serializer.data)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+
+    def put(self, request, pk):
+        try:
+            user = User.objects.get(pk=pk)
+            serializer = UserSerializer(user, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=400)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+
+    def delete(self, request, pk):
+        try:
+            user = User.objects.get(pk=pk)
+            if user == request.user:
+                return Response({"error": "You cannot delete yourself"}, status=400)
+            user.delete()
+            return Response({"message": "User deleted successfully"})
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+        
+class ClassListCreateView(ListCreateAPIView):
+    permission_classes = [IsCustomAdmin]
+    queryset = Class.objects.all()
+    serializer_class = ClassSerializer
+
+class ClassDetailView(RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsCustomAdmin]
+    queryset = Class.objects.all()
+    serializer_class = ClassSerializer
+
+class SubjectListCreateView(ListCreateAPIView):
+    permission_classes = [IsCustomAdmin]
+    queryset = Subject.objects.all()
+    serializer_class = SubjectSerializer
+
+class SubjectDetailView(RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsCustomAdmin]
+    queryset = Subject.objects.all()
+    serializer_class = SubjectSerializer
+
+class EnrollmentListCreateView(ListCreateAPIView):
+    permission_classes = [IsCustomAdmin]
+    queryset = StudentClassEnrollment.objects.all()
+    serializer_class = StudentClassEnrollmentSerializer
+
+class EnrollmentDetailView(RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsCustomAdmin]
+    queryset = StudentClassEnrollment.objects.all()
+    serializer_class = StudentClassEnrollmentSerializer
     
 class StudentAttendanceView(APIView):
     permission_classes = [IsAuthenticated]

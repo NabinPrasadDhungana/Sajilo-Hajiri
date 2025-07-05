@@ -19,5 +19,31 @@ urlpatterns = [
     path('attendance/student/', StudentAttendanceView.as_view(), name='student-attendance'),
     path('verify-token/', VerifyTokenView.as_view(), name='verify-reset-token'),
     path('set-password/', SetNewPasswordView.as_view(), name='set-new-password'),
-
+    path('admin/create-class/', CreateClassView.as_view(), name='create-class'),
+    path('admin/create-subject/', CreateSubjectView.as_view(), name='create-subject'),
+    path('admin/assign-teacher/', AssignTeacherView.as_view(), name='assign-teacher'),
+    path('admin/enroll-student/', EnrollStudentView.as_view(), name='enroll-student'),
+    path('classes/', ClassListCreateView.as_view(), name='class-list'),
+    path('classes/<int:pk>/', ClassDetailView.as_view(), name='class-detail'),
+    path('subjects/', SubjectListCreateView.as_view(), name='subject-list'),
+    path('subjects/<int:pk>/', SubjectDetailView.as_view(), name='subject-detail'),
+    path('teachers/', ListTeachers.as_view(), name='list-teachers'),
+    path('students/', ListStudents.as_view(), name='list-students'),
+    # Class URLs
+    path('classes/<int:pk>/', ClassDetailView.as_view(), name='class-detail'),
+    
+    # Subject URLs
+    path('subjects/<int:pk>/', SubjectDetailView.as_view(), name='subject-detail'),
+    
+    # Assignment URLs
+    path('assignments/', AssignmentListView.as_view(), name='assignment-list'),
+    path('assignments/<int:pk>/', AssignmentDetailView.as_view(), name='assignment-detail'),
+    
+    # Enrollment URLs
+    path('enrollments/', EnrollmentListCreateView.as_view(), name='enrollment-list'),
+    path('enrollments/<int:pk>/', EnrollmentDetailView.as_view(), name='enrollment-detail'),
+    
+    # User URLs
+    path('admin/users/', UserListView.as_view(), name='user-list'),
+    path('users/<int:pk>/', UserDetailView.as_view(), name='user-detail'),
 ]

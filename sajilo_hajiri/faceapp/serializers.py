@@ -23,14 +23,32 @@ class SubjectSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ClassSubjectSerializer(serializers.ModelSerializer):
+    teacher_name = serializers.CharField(source='teacher.name', read_only=True)
+    class_name = serializers.CharField(source='class_instance.name', read_only=True)
+    subject_name = serializers.CharField(source='subject.name', read_only=True)
+    
     class Meta:
         model = ClassSubject
-        fields = '__all__'
+        fields = ['id', 'teacher', 'teacher_name', 'class_instance', 'class_name', 
+                 'subject', 'subject_name']
+
+    def validate_teacher(self, value):
+        if value.role != 'teacher':
+            raise serializers.ValidationError("Assigned user is not a teacher")
+        return value
 
 class StudentClassEnrollmentSerializer(serializers.ModelSerializer):
+    student_name = serializers.CharField(source='student.name', read_only=True)
+    class_name = serializers.CharField(source='enrolled_class.name', read_only=True)
+    
     class Meta:
         model = StudentClassEnrollment
-        fields = '__all__'
+        fields = ['id', 'student', 'student_name', 'enrolled_class', 'class_name',]
+    
+    def validate_student(self, value):
+        if value.role != 'student':
+            raise serializers.ValidationError("Assigned user is not a student")
+        return value
 
 class AttendanceSessionSerializer(serializers.ModelSerializer):
     class Meta:
