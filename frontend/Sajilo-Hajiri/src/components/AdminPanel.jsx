@@ -405,6 +405,37 @@ export default function AdminPanel({ user }) {
   }
 };
 
+const deleteEnrollment = async (enrollmentId) => {
+  if (!window.confirm('Are you sure you want to remove this enrollment?')) {
+    return;
+  }
+
+  try {
+    const response = await authFetch(`/api/enrollments/${enrollmentId}/`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCSRFToken(),
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to delete enrollment');
+    }
+
+    toast.success('Enrollment removed successfully');
+    
+    // Refresh enrollments list
+    const enrollmentsRes = await fetch('/api/enrollments/');
+    setEnrollments(await enrollmentsRes.json());
+
+  } catch (err) {
+    toast.error(`Failed to remove enrollment: ${err.message}`);
+    console.error('Delete enrollment error:', err);
+  }
+};
+
   // User management functions
   const handleUserAction = async (email, action) => {
   try {
