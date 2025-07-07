@@ -23,10 +23,7 @@ export const authFetch = async (url, options = {}) => {
     headers: headers
   });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || 'Request failed');
-  }
+  
 
   return response;
 };

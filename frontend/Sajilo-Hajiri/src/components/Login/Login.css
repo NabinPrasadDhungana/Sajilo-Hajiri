@@ -5,6 +5,10 @@
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
+.Toastify__toast {
+  font-size: 0.95rem;
+}
+
 .login-wrapper {
   min-height: 100vh;
   background: #f5f7fa;
@@ -20,7 +24,7 @@
   max-width: 400px;
   width: 100%;
   border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
 
@@ -54,7 +58,7 @@
 .input-with-icon input {
   width: 100%;
   padding-left: 45px;
-  padding-right: 20px;
+  padding-right: 45px;
   padding-top: 15px;
   padding-bottom: 15px;
   font-size: 1.1rem;
@@ -69,19 +73,40 @@
   box-shadow: 0 0 8px #4a90e2aa;
 }
 
-.forgot-password {
-  color: #4a90e2;
-  text-align: right;
-  margin-bottom: 30px;
+.toggle-password {
+  position: absolute;
+  right: 15px;
+  font-size: 18px;
   cursor: pointer;
-  font-weight: 600;
-  transition: color 0.3s ease;
+  user-select: none;
+  color: #777;
 }
 
-.forgot-password:hover {
-  color: #1451a3;
+.toggle-password:hover {
+  color: #333;
 }
 
+/* Remember me checkbox */
+.form-check {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.form-check-input {
+  margin-right: 10px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.form-check-label {
+  font-size: 0.95rem;
+  color: #444;
+  user-select: none;
+}
+
+/* Buttons */
 .login-form button {
   background: #4a90e2;
   color: white;
@@ -97,4 +122,27 @@
 
 .login-form button:hover {
   background-color: #1451a3;
+}
+
+.login-form button.loading {
+  opacity: 0.7;
+  pointer-events: none;
+  cursor: wait;
+}
+
+/* Toggle forgot/login button */
+.btn-link {
+  background: none;
+  border: none;
+  color: #4a90e2;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  margin-top: 15px;
+}
+
+.btn-link:hover {
+  color: #1451a3;
 }

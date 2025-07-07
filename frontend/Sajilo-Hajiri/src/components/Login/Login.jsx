@@ -38,59 +38,75 @@ const Login = ({ setCurrentUser }) => {
   const validateForm = () => {
     const { email, password } = formData;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     if (!email || !emailRegex.test(email)) {
-      toast.warn("⚠️ Please enter a valid email");
+      toast.warning("⚠️ Please enter a valid email address");
       return false;
     }
-    if (!forgotMode && (!password || password.length < 6)) {
-      toast.warn("⚠️ Password must be at least 6 characters");
-      return false;
+
+    if (!forgotMode) {
+      if (!password || password.length < 6) {
+        toast.warning("⚠️ Password must be at least 6 characters long");
+        return false;
+      }
     }
+
     return true;
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-    setLoading(true);
+  e.preventDefault();
+  if (!validateForm()) return;
+  setLoading(true);
 
-    try {
-      const endpoint = forgotMode ? '/api/forgot-password/' : '/api/login/';
-      const response = await authFetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: formData.email, password: formData.password }),
-      });
+  try {
+    const endpoint = forgotMode ? '/api/forgot-password/' : '/api/login/';
+    const response = await authFetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: formData.email, password: formData.password }),
+    });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Something went wrong');
+    const data = await response.json();
 
-      if (forgotMode) {
-        toast.success("📩 Password reset instructions sent to your email");
-        setForgotMode(false);
-        return;
-      }
-
-      if (formData.remember) {
-        localStorage.setItem('rememberedEmail', formData.email);
-      } else {
-        localStorage.removeItem('rememberedEmail');
-      }
-
-      setCurrentUser(data.user);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      toast.success("✅ Login successful");
-
-      setTimeout(() => {
-        navigate(data.user.role === 'admin' ? '/admin' : '/dashboard');
-      }, 1000);
-
-    } catch (err) {
-      toast.error(err.message.includes('credentials') ? "❌ Invalid credentials" : "❗ Login failed");
-    } finally {
-      setLoading(false);
+    if (!response.ok) {
+      // Show first available error
+      const firstError =
+        data?.error ||
+        data?.username?.[0] ||
+        data?.password?.[0] ||
+        "Unexpected error";
+      toast.error(`❌ ${firstError}`);
+      return;
     }
-  };
+
+    if (forgotMode) {
+      toast.success("📩 Password reset instructions sent to your email");
+      setForgotMode(false);
+      return;
+    }
+
+    if (formData.remember) {
+      localStorage.setItem('rememberedEmail', formData.email);
+    } else {
+      localStorage.removeItem('rememberedEmail');
+    }
+
+    setCurrentUser(data.user);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    toast.success("✅ Login successful");
+
+    setTimeout(() => {
+      navigate(data.user.role === 'admin' ? '/admin' : '/dashboard');
+    }, 1000);
+
+  } catch (err) {
+    toast.error("❗ Network or server error");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="login-wrapper">
@@ -99,6 +115,7 @@ const Login = ({ setCurrentUser }) => {
         <h2>{forgotMode ? 'Forgot Password' : 'Login'}</h2>
 
         <form onSubmit={handleSubmit} className="login-form">
+          {/* Email Input */}
           <div className="input-with-icon">
             <span className="icon">📧</span>
             <input
@@ -111,6 +128,7 @@ const Login = ({ setCurrentUser }) => {
             />
           </div>
 
+          {/* Password Input */}
           {!forgotMode && (
             <div className="input-with-icon">
               <span className="icon">🔒</span>
@@ -132,6 +150,7 @@ const Login = ({ setCurrentUser }) => {
             </div>
           )}
 
+          {/* Remember Me */}
           {!forgotMode && (
             <div className="form-check mb-2">
               <input
@@ -148,15 +167,31 @@ const Login = ({ setCurrentUser }) => {
             </div>
           )}
 
-          <button type="submit" disabled={loading} className={loading ? 'loading' : ''}>
-            {loading ? (forgotMode ? 'Sending...' : 'Logging in...') : (forgotMode ? 'Send Reset Link' : 'Login')}
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className={`btn btn-primary w-100 ${loading ? 'loading' : ''}`}
+          >
+            {loading
+              ? forgotMode
+                ? 'Sending...'
+                : 'Logging in...'
+              : forgotMode
+                ? 'Send Reset Link'
+                : 'Login'}
           </button>
         </form>
 
+        {/* Forgot Mode Toggle */}
         <div className="text-center mt-3">
           <button
+            type="button"
             className="btn btn-link"
-            onClick={() => setForgotMode((prev) => !prev)}
+            onClick={() => {
+              setForgotMode(!forgotMode);
+              setFormData(prev => ({ ...prev, password: '' }));
+            }}
           >
             {forgotMode ? '← Back to Login' : 'Forgot Password?'}
           </button>
