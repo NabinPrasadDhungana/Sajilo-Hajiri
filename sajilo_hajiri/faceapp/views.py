@@ -27,6 +27,9 @@ from django.urls import reverse
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 
+from django.db import transaction
+from django.core.files.storage import default_storage
+
 User = get_user_model()
 
 # Authentication Views
@@ -238,19 +241,54 @@ class UserApprovalAPIView(APIView):
         email = request.data.get("email")
         action = request.data.get("action")
 
+        if not email or not action:
+            return Response(
+                {"error": "Both email and action are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         try:
-            user = User.objects.get(email=email)
-            if action == "approve":
-                user.approval_status = 'approved'
-                user.feedback = ''
-            elif action == "unapprove":
-                user.approval_status = 'unapproved'
-            else:
-                return Response({"error": "Invalid action"}, status=400)
-            user.save()
-            return Response({"message": f"User {action}d successfully."})
+            with transaction.atomic():
+                user = User.objects.select_for_update().get(email=email)
+                
+                if action == "approve":
+                    user.approval_status = 'approved'
+                    user.feedback = ''
+                    user.save()
+                    return Response(
+                        {"message": "User approved successfully"},
+                        status=status.HTTP_200_OK
+                    )
+                
+                elif action == "unapprove":
+                    # Delete associated files
+                    if user.avatar:
+                        default_storage.delete(user.avatar.path)
+                    
+                    # Delete the user (related objects will delete via CASCADE)
+                    user.delete()
+                    return Response(
+                        {"message": "User unapproved and all data deleted successfully"},
+                        status=status.HTTP_200_OK
+                    )
+                
+                else:
+                    return Response(
+                        {"error": "Invalid action. Use 'approve' or 'unapprove'"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
         except User.DoesNotExist:
-            return Response({"error": "User not found"}, status=404)
+            return Response(
+                {"error": "User not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+            
+        except Exception as e:
+            return Response(
+                {"error": f"An error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 @method_decorator(csrf_protect, name='dispatch')
 class SendFeedbackAPIView(APIView):
