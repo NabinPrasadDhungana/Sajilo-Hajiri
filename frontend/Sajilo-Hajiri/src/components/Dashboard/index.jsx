@@ -157,11 +157,11 @@ export default function Dashboard({ user }) {
   if (user.role === "student") {
     const student = data.student_data;
     if (!student) {
-      return <div className="main-content container mt-4 alert alert-warning">⚠️ You are not enrolled in any class yet.</div>;
+      return <div className="main-content container  alert alert-warning">⚠️ You are not enrolled in any class yet.</div>;
     }
 
     return (
-      <div className="main-content container mt-4">
+      <div className="main-content container ">
         <h2 className="mb-4">Welcome, {user.name || user.username} 👨‍🎓</h2>
         <div className="card mb-4 shadow-sm">
           <div className="card-body">
@@ -215,11 +215,11 @@ export default function Dashboard({ user }) {
   if (user.role === "teacher") {
     const teacher = data.teacher_data;
     if (!teacher || teacher.teaching.length === 0) {
-      return <div className="main-content container mt-4 alert alert-info">📘 You are not assigned to teach any classes yet.</div>;
+      return <div className="main-content container  alert alert-info">📘 You are not assigned to teach any classes yet.</div>;
     }
 
     return (
-      <div className="main-content container mt-4">
+      <div className="main-content container ">
         <h2 className="mb-4">Welcome, {user.name || user.username} 👨‍🏫</h2>
         {teacher.teaching.map((assignment, index) => (
           <div className="card mb-4 shadow-sm" key={index}>

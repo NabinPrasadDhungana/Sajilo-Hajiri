@@ -116,8 +116,7 @@
 /* Main Content Padding  */
 /* --------------------- */
 .main-content {
-  padding-top: 80px; /* Adjusted for navbar height */
-  padding-bottom: 70px; /* Adjusted for footer height */
+  margin-top: 85px; /* Adjusted for navbar height */
 }
 
 /* --------------------- */

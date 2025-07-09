@@ -671,11 +671,11 @@ const handleCreateSubject = async (e) => {
     fetchAllData();
   }, [user, navigate]);
 
-  if (isLoading) return <div className="main-content container mt-5 text-center">Loading...</div>;
-  if (error) return <div className="main-content container mt-5 alert alert-danger">{error}</div>;
+  if (isLoading) return <div className="main-content container  text-center">Loading...</div>;
+  if (error) return <div className="main-content container  alert alert-danger">{error}</div>;
 
   return (
-    <div className="main-content container mt-5">
+    <div className="main-content container ">
       <h1 className="mb-4">Admin Panel</h1>
       
       {/* Tab Navigation */}
