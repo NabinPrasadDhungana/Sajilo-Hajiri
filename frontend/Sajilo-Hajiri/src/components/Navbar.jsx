@@ -44,6 +44,16 @@ const Navbar = ({ currentUser, handleLogout, notifications }) => {
               </>
             ) : (
               <>
+                 {currentUser?.role === 'admin' && (
+                <li className="nav-item">
+                  <NavLink 
+                    to="/records" 
+                    className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+                  >
+                    Records
+                  </NavLink>
+                </li>
+              )}
                 <li className="nav-item d-flex align-items-center ms-3">
                   <span className="fw-bold me-2">
                     {currentUser.name || currentUser.username}
