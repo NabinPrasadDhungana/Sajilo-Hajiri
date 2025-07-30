@@ -926,6 +926,7 @@ export default function AdminPanel({ user }) {
         </div>
       )}
 
+
       {/* User Management Tab */}
       {activeTab === 'users' && (
         <div className="user-management-tab">
@@ -1016,6 +1017,7 @@ export default function AdminPanel({ user }) {
                 <table className="table table-hover">
                   <thead>
                     <tr>
+                      <th>Roll No.</th>
                       <th>Name</th>
                       <th>Email</th>
                       <th>Role</th>
@@ -1026,6 +1028,7 @@ export default function AdminPanel({ user }) {
                   <tbody>
                     {users.map(user => (
                       <tr key={user.id}>
+                        <td>{user.roll_number}</td>
                         <td>{user.name}</td>
                         <td>{user.email}</td>
                         <td>
