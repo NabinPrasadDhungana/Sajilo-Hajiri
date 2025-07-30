@@ -18,6 +18,7 @@ export default function AdminPanel({ user }) {
   const [subjects, setSubjects] = useState([]);
   const [enrollments, setEnrollments] = useState([]);
   const [assignments, setAssignments] = useState([]);
+  const [searchRoll, setSearchRoll] = useState('');
 
 
   // Form states
@@ -1013,6 +1014,16 @@ export default function AdminPanel({ user }) {
               <h5 className="mb-0">User List</h5>
             </div>
             <div className="card-body">
+              <div className="mb-3">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Search by Roll Number"
+                  value={searchRoll}
+                  onChange={(e) => setSearchRoll(e.target.value)}
+                />
+              </div>
+
               <div className="table-responsive">
                 <table className="table table-hover">
                   <thead>
@@ -1026,74 +1037,77 @@ export default function AdminPanel({ user }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {users.map(user => (
-                      <tr key={user.id}>
-                        <td>{user.roll_number}</td>
-                        <td>{user.name}</td>
-                        <td>{user.email}</td>
-                        <td>
-                          <span className={`badge ${user.role === 'teacher' ? 'bg-info' :
-                              user.role === 'admin' ? 'bg-danger' : 'bg-primary'
-                            }`}>
-                            {user.role}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`badge ${user.approval_status === 'approved' ? 'bg-success' :
-                              user.approval_status === 'unapproved' ? 'bg-danger' : 'bg-warning'
-                            }`}>
-                            {user.approval_status || 'pending'}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="d-flex gap-2">
-                            <button
-                              className="btn btn-sm btn-primary"
-                              onClick={() => editUser(user)}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              className="btn btn-sm btn-danger"
-                              onClick={() => {
-                                if (window.confirm('Are you sure you want to delete this user?')) {
-                                  deleteUser(user.id);
-                                }
-                              }}
-                              disabled={user.id === user?.id} // Only if currentUser is available
-                            >
-                              Delete
-                            </button>
+                    {users
+                      .filter(user => user.roll_number?.toString().includes(searchRoll.trim()))
+                      .map(user => (
 
-                            {user.approval_status !== 'approved' && (
+                        <tr key={user.id}>
+                          <td>{user.roll_number}</td>
+                          <td>{user.name}</td>
+                          <td>{user.email}</td>
+                          <td>
+                            <span className={`badge ${user.role === 'teacher' ? 'bg-info' :
+                              user.role === 'admin' ? 'bg-danger' : 'bg-primary'
+                              }`}>
+                              {user.role}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`badge ${user.approval_status === 'approved' ? 'bg-success' :
+                              user.approval_status === 'unapproved' ? 'bg-danger' : 'bg-warning'
+                              }`}>
+                              {user.approval_status || 'pending'}
+                            </span>
+                          </td>
+                          <td>
+                            <div className="d-flex gap-2">
                               <button
-                                className="btn btn-sm btn-success"
-                                onClick={() => handleUserAction(user.email, 'approve')}
+                                className="btn btn-sm btn-primary"
+                                onClick={() => editUser(user)}
                               >
-                                Approve
+                                Edit
                               </button>
-                            )}
-                            {user.approval_status !== 'unapproved' && (
                               <button
-                                className="btn btn-sm btn-warning"
-                                onClick={() => handleUserAction(user.email, 'unapprove')}
+                                className="btn btn-sm btn-danger"
+                                onClick={() => {
+                                  if (window.confirm('Are you sure you want to delete this user?')) {
+                                    deleteUser(user.id);
+                                  }
+                                }}
+                                disabled={user.id === user?.id} // Only if currentUser is available
                               >
-                                Unapprove
+                                Delete
                               </button>
-                            )}
-                            <button
-                              className={`btn btn-sm ${selectedEmail === user.email ? 'btn-secondary' : 'btn-info'
-                                }`}
-                              onClick={() => setSelectedEmail(
-                                selectedEmail === user.email ? null : user.email
+
+                              {user.approval_status !== 'approved' && (
+                                <button
+                                  className="btn btn-sm btn-success"
+                                  onClick={() => handleUserAction(user.email, 'approve')}
+                                >
+                                  Approve
+                                </button>
                               )}
-                            >
-                              {selectedEmail === user.email ? 'Cancel' : 'Feedback'}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                              {user.approval_status !== 'unapproved' && (
+                                <button
+                                  className="btn btn-sm btn-warning"
+                                  onClick={() => handleUserAction(user.email, 'unapprove')}
+                                >
+                                  Unapprove
+                                </button>
+                              )}
+                              <button
+                                className={`btn btn-sm ${selectedEmail === user.email ? 'btn-secondary' : 'btn-info'
+                                  }`}
+                                onClick={() => setSelectedEmail(
+                                  selectedEmail === user.email ? null : user.email
+                                )}
+                              >
+                                {selectedEmail === user.email ? 'Cancel' : 'Feedback'}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>
