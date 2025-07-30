@@ -6,6 +6,8 @@ import { toast } from 'react-toastify';
 export default function AdminPanel({ user }) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeSubTab, setActiveSubTab] = useState('students'); // 'students' | 'teachers'
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -396,7 +398,18 @@ export default function AdminPanel({ user }) {
     }
   };
 
+
+
   // User management functions
+  const filteredUsers = users.filter(user =>
+    user.role === (activeSubTab === 'students' ? 'student' : 'teacher') &&
+    (
+      user.name?.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
+      user.email?.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
+      (activeSubTab === 'students' && user.roll_number?.toString().includes(searchQuery))
+    )
+  );
+
   const handleUserAction = async (email, action) => {
     try {
       const response = await authFetch("/api/admin/approve-user/", {  // Use your existing endpoint
@@ -931,6 +944,25 @@ export default function AdminPanel({ user }) {
       {/* User Management Tab */}
       {activeTab === 'users' && (
         <div className="user-management-tab">
+          <ul className="nav nav-tabs mb-3">
+            <li className="nav-item">
+              <button
+                className={`nav-link ${activeSubTab === 'students' ? 'active' : ''}`}
+                onClick={() => setActiveSubTab('students')}
+              >
+                Students
+              </button>
+            </li>
+            <li className="nav-item">
+              <button
+                className={`nav-link ${activeSubTab === 'teachers' ? 'active' : ''}`}
+                onClick={() => setActiveSubTab('teachers')}
+              >
+                Teachers
+              </button>
+            </li>
+          </ul>
+
           <div className="card mb-4">
             <div className="card-header bg-primary text-white">
               <h5 className="mb-0">{editMode.user ? 'Edit User' : 'Create New User'}</h5>
@@ -1018,11 +1050,12 @@ export default function AdminPanel({ user }) {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Search by Roll Number"
-                  value={searchRoll}
-                  onChange={(e) => setSearchRoll(e.target.value)}
+                  placeholder={`Search ${activeSubTab} by ${activeSubTab === 'students' ? 'Roll No., Name, or Email' : 'Name or Email'}`}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
+
 
               <div className="table-responsive">
                 <table className="table table-hover">
@@ -1037,77 +1070,75 @@ export default function AdminPanel({ user }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {users
-                      .filter(user => user.roll_number?.toString().includes(searchRoll.trim()))
-                      .map(user => (
+                    {filteredUsers.map(user => (
 
-                        <tr key={user.id}>
-                          <td>{user.roll_number}</td>
-                          <td>{user.name}</td>
-                          <td>{user.email}</td>
-                          <td>
-                            <span className={`badge ${user.role === 'teacher' ? 'bg-info' :
-                              user.role === 'admin' ? 'bg-danger' : 'bg-primary'
-                              }`}>
-                              {user.role}
-                            </span>
-                          </td>
-                          <td>
-                            <span className={`badge ${user.approval_status === 'approved' ? 'bg-success' :
-                              user.approval_status === 'unapproved' ? 'bg-danger' : 'bg-warning'
-                              }`}>
-                              {user.approval_status || 'pending'}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="d-flex gap-2">
-                              <button
-                                className="btn btn-sm btn-primary"
-                                onClick={() => editUser(user)}
-                              >
-                                Edit
-                              </button>
-                              <button
-                                className="btn btn-sm btn-danger"
-                                onClick={() => {
-                                  if (window.confirm('Are you sure you want to delete this user?')) {
-                                    deleteUser(user.id);
-                                  }
-                                }}
-                                disabled={user.id === user?.id} // Only if currentUser is available
-                              >
-                                Delete
-                              </button>
+                      <tr key={user.id}>
+                        <td>{user.roll_number}</td>
+                        <td>{user.name}</td>
+                        <td>{user.email}</td>
+                        <td>
+                          <span className={`badge ${user.role === 'teacher' ? 'bg-info' :
+                            user.role === 'admin' ? 'bg-danger' : 'bg-primary'
+                            }`}>
+                            {user.role}
+                          </span>
+                        </td>
+                        <td>
+                          <span className={`badge ${user.approval_status === 'approved' ? 'bg-success' :
+                            user.approval_status === 'unapproved' ? 'bg-danger' : 'bg-warning'
+                            }`}>
+                            {user.approval_status || 'pending'}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="d-flex gap-2">
+                            <button
+                              className="btn btn-sm btn-primary"
+                              onClick={() => editUser(user)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="btn btn-sm btn-danger"
+                              onClick={() => {
+                                if (window.confirm('Are you sure you want to delete this user?')) {
+                                  deleteUser(user.id);
+                                }
+                              }}
+                              disabled={user.id === user?.id} // Only if currentUser is available
+                            >
+                              Delete
+                            </button>
 
-                              {user.approval_status !== 'approved' && (
-                                <button
-                                  className="btn btn-sm btn-success"
-                                  onClick={() => handleUserAction(user.email, 'approve')}
-                                >
-                                  Approve
-                                </button>
-                              )}
-                              {user.approval_status !== 'unapproved' && (
-                                <button
-                                  className="btn btn-sm btn-warning"
-                                  onClick={() => handleUserAction(user.email, 'unapprove')}
-                                >
-                                  Unapprove
-                                </button>
-                              )}
+                            {user.approval_status !== 'approved' && (
                               <button
-                                className={`btn btn-sm ${selectedEmail === user.email ? 'btn-secondary' : 'btn-info'
-                                  }`}
-                                onClick={() => setSelectedEmail(
-                                  selectedEmail === user.email ? null : user.email
-                                )}
+                                className="btn btn-sm btn-success"
+                                onClick={() => handleUserAction(user.email, 'approve')}
                               >
-                                {selectedEmail === user.email ? 'Cancel' : 'Feedback'}
+                                Approve
                               </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                            )}
+                            {user.approval_status !== 'unapproved' && (
+                              <button
+                                className="btn btn-sm btn-warning"
+                                onClick={() => handleUserAction(user.email, 'unapprove')}
+                              >
+                                Unapprove
+                              </button>
+                            )}
+                            <button
+                              className={`btn btn-sm ${selectedEmail === user.email ? 'btn-secondary' : 'btn-info'
+                                }`}
+                              onClick={() => setSelectedEmail(
+                                selectedEmail === user.email ? null : user.email
+                              )}
+                            >
+                              {selectedEmail === user.email ? 'Cancel' : 'Feedback'}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
