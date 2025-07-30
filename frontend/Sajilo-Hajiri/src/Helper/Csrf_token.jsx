@@ -4,9 +4,9 @@ export const authFetch = async (url, options = {}) => {
     const cookieValue = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
     return cookieValue ? cookieValue.pop() : '';
   };
-  
+
   const csrfToken = getCookie('csrftoken');
-  
+
   if (!csrfToken) {
     throw new Error('CSRF token not found');
   }
@@ -22,8 +22,6 @@ export const authFetch = async (url, options = {}) => {
     credentials: 'include',  // Required for cookies
     headers: headers
   });
-
-  
 
   return response;
 };

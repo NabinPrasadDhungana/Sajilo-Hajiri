@@ -35,7 +35,7 @@ const Register = (props) => {
       ...prev,
       [name]: value
     }));
-    
+
     // Clear error when field changes
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -127,7 +127,7 @@ const Register = (props) => {
     setErrors(prev => ({ ...prev, photo: '' }));
   };
 
-const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
     setIsSubmitting(true);
@@ -186,14 +186,14 @@ const handleSubmit = async (e) => {
   };
 
   // Helper functions
-  const getFieldClasses = (fieldName) => 
+  const getFieldClasses = (fieldName) =>
     `form-control ${errors[fieldName] ? 'is-invalid' : ''}`;
 
   const renderSelectOptions = (field) => {
     switch (field) {
       case 'semester':
         return [...Array(8)].map((_, i) => (
-          <option key={i+1} value={i+1}>Semester {i+1}</option>
+          <option key={i + 1} value={i + 1}>Semester {i + 1}</option>
         ));
       case 'section':
         return ['Morning', 'Day'].map(opt => (
@@ -307,7 +307,7 @@ const handleSubmit = async (e) => {
         )}
 
         {/* Photo Upload Section */}
-        <PhotoUploadSection 
+        <PhotoUploadSection
           photo={photo}
           isWebcamOpen={isWebcamOpen}
           setIsWebcamOpen={setIsWebcamOpen}
@@ -316,9 +316,9 @@ const handleSubmit = async (e) => {
           error={errors.photo}
         />
 
-        <SubmitButton 
-          isSubmitting={isSubmitting} 
-          message={message} 
+        <SubmitButton
+          isSubmitting={isSubmitting}
+          message={message}
         />
       </form>
     </div>
@@ -350,7 +350,7 @@ const PhotoUploadSection = ({ photo, isWebcamOpen, setIsWebcamOpen, handlePhotoC
   <div className="my-4">
     <label className="form-label fw-bold">Upload or Capture Photo</label>
     {error && <div className="text-danger small mb-2">{error}</div>}
-    
+
     <div className="mb-3">
       <UploadButton
         active={!isWebcamOpen}
@@ -438,18 +438,17 @@ const PhotoPreview = ({ photo, setPhoto }) => (
 
 const SubmitButton = ({ isSubmitting, message }) => (
   <>
-    <button 
-      type="submit" 
-      className="btn btn-primary" 
+    <button
+      type="submit"
+      className="btn btn-primary"
       disabled={isSubmitting}
     >
       {isSubmitting ? 'Submitting...' : 'Submit'}
     </button>
-    
+
     {message && (
-      <div className={`alert mt-3 ${
-        message.startsWith('✅') ? 'alert-success' : 'alert-danger'
-      }`}>
+      <div className={`alert mt-3 ${message.startsWith('✅') ? 'alert-success' : 'alert-danger'
+        }`}>
         {message}
       </div>
     )}

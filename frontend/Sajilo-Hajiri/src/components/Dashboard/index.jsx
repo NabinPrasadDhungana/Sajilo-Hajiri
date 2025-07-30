@@ -11,10 +11,10 @@ export default function Dashboard({ user }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-  if (user?.role === "admin") {
-    navigate("/admin"); // prevent further dashboard logic
-  }
-}, [user, navigate]);
+    if (user?.role === "admin") {
+      navigate("/admin"); // prevent further dashboard logic
+    }
+  }, [user, navigate]);
 
 
   const getCSRFToken = () => {

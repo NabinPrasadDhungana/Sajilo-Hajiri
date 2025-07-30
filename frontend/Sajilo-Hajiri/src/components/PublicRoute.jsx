@@ -7,7 +7,7 @@ const PublicRoute = ({ children }) => {
   if (user) {
     // // Redirect approved users to dashboard
     // if (user.approval_status === 'approved') {
-      return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/dashboard" replace />;
     // }
     // Redirect pending/unapproved users to pending dashboard or status page
     // return <Navigate to="/pending-status" replace />;

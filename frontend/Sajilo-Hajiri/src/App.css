@@ -15,8 +15,13 @@
 }
 
 @keyframes App-logo-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .App-header {
@@ -66,7 +71,7 @@
 
 .navbar-nav {
   gap: 1.5rem;
- 
+
 }
 
 .nav-link {
@@ -116,7 +121,8 @@
 /* Main Content Padding  */
 /* --------------------- */
 .main-content {
-  margin-top: 85px; /* Adjusted for navbar height */
+  margin-top: 85px;
+  /* Adjusted for navbar height */
   margin-bottom: 70px;
 }
 
@@ -165,7 +171,11 @@ img {
   border-radius: 0.5rem;
 }
 
-h1, h2, h3, h4, h5 {
+h1,
+h2,
+h3,
+h4,
+h5 {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 

@@ -93,20 +93,20 @@ export default function App() {
 
 
   // In your handleLogout function (App.jsx)
-const handleLogout = async () => {
-  try {
-    // Refresh CSRF token first
-    await fetch('/api/csrf/', { credentials: 'include' });
-    
-    // Then call logout
-    await authFetch('/api/logout/', { method: 'POST' });
-    
-    setCurrentUser(null);
-    localStorage.removeItem('user');
-  } catch (error) {
-    console.error('Logout failed:', error);
-  }
-};
+  const handleLogout = async () => {
+    try {
+      // Refresh CSRF token first
+      await fetch('/api/csrf/', { credentials: 'include' });
+
+      // Then call logout
+      await authFetch('/api/logout/', { method: 'POST' });
+
+      setCurrentUser(null);
+      localStorage.removeItem('user');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   const handleStudentClick = (student) => {
     setSelectedStudent(student);
@@ -163,10 +163,10 @@ const handleLogout = async () => {
           path="/admin"
           element={
             <ProtectedAdminRoute>
-              <AdminPanel user={currentUser}/>
+              <AdminPanel user={currentUser} />
             </ProtectedAdminRoute>
           }
-        />        
+        />
         <Route path="/not-authorized" element={<NotAuthorized />} />
         <Route path="/forgot-password" element={<ForgotPasswordForm />} />
         <Route path="/reset-password/:uidb64/:token" element={<PasswordResetForm />} />

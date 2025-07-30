@@ -55,57 +55,57 @@ const Login = ({ setCurrentUser }) => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!validateForm()) return;
-  setLoading(true);
+    e.preventDefault();
+    if (!validateForm()) return;
+    setLoading(true);
 
-  try {
-    const endpoint = forgotMode ? '/api/forgot-password/' : '/api/login/';
-    const response = await authFetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: formData.email, password: formData.password }),
-    });
+    try {
+      const endpoint = forgotMode ? '/api/forgot-password/' : '/api/login/';
+      const response = await authFetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: formData.email, password: formData.password }),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (!response.ok) {
-      // Show first available error
-      const firstError =
-        data?.error ||
-        data?.username?.[0] ||
-        data?.password?.[0] ||
-        "Unexpected error";
-      toast.error(`❌ ${firstError}`);
-      return;
+      if (!response.ok) {
+        // Show first available error
+        const firstError =
+          data?.error ||
+          data?.username?.[0] ||
+          data?.password?.[0] ||
+          "Unexpected error";
+        toast.error(`❌ ${firstError}`);
+        return;
+      }
+
+      if (forgotMode) {
+        toast.success("📩 Password reset instructions sent to your email");
+        setForgotMode(false);
+        return;
+      }
+
+      if (formData.remember) {
+        localStorage.setItem('rememberedEmail', formData.email);
+      } else {
+        localStorage.removeItem('rememberedEmail');
+      }
+
+      setCurrentUser(data.user);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      toast.success("✅ Login successful");
+
+      setTimeout(() => {
+        navigate(data.user.role === 'admin' ? '/admin' : '/dashboard');
+      }, 1000);
+
+    } catch (err) {
+      toast.error("❗ Network or server error");
+    } finally {
+      setLoading(false);
     }
-
-    if (forgotMode) {
-      toast.success("📩 Password reset instructions sent to your email");
-      setForgotMode(false);
-      return;
-    }
-
-    if (formData.remember) {
-      localStorage.setItem('rememberedEmail', formData.email);
-    } else {
-      localStorage.removeItem('rememberedEmail');
-    }
-
-    setCurrentUser(data.user);
-    localStorage.setItem('user', JSON.stringify(data.user));
-    toast.success("✅ Login successful");
-
-    setTimeout(() => {
-      navigate(data.user.role === 'admin' ? '/admin' : '/dashboard');
-    }, 1000);
-
-  } catch (err) {
-    toast.error("❗ Network or server error");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
   return (

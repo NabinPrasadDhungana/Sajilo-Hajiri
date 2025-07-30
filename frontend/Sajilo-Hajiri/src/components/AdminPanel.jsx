@@ -18,7 +18,7 @@ export default function AdminPanel({ user }) {
   const [subjects, setSubjects] = useState([]);
   const [enrollments, setEnrollments] = useState([]);
   const [assignments, setAssignments] = useState([]);
-  
+
 
   // Form states
   const [feedbackText, setFeedbackText] = useState("");
@@ -72,7 +72,7 @@ export default function AdminPanel({ user }) {
     try {
       setIsLoading(true);
       const [
-        statsRes, usersRes, teachersRes, 
+        statsRes, usersRes, teachersRes,
         studentsRes, classesRes, subjectsRes,
         enrollmentsRes, assignmentsRes
       ] = await Promise.all([
@@ -126,73 +126,73 @@ export default function AdminPanel({ user }) {
 
   // Class CRUD
   const handleClassSubmit = async (e) => {
-  e.preventDefault();
-  
-  // Validate form data
-  if (!formData.className || !formData.year || !formData.semester || !formData.department) {
-    toast.error("Please fill all class fields");
-    return;
-  }
+    e.preventDefault();
 
-  try {
-    const payload = {
-      name: formData.className,
-      year: formData.year,
-      semester: formData.semester,
-      department: formData.department
-    };
-
-    const response = await authFetch("/api/classes/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCSRFToken(),
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to create class");
+    // Validate form data
+    if (!formData.className || !formData.year || !formData.semester || !formData.department) {
+      toast.error("Please fill all class fields");
+      return;
     }
 
-    toast.success("Class created successfully!");
-    
-    // Refresh classes list
-    const classesRes = await fetch("/api/classes/");
-    setClasses(await classesRes.json());
-    
-    // Reset form
-    setFormData(prev => ({
-      ...prev,
-      className: "",
-      year: "",
-      semester: "",
-      department: ""
-    }));
+    try {
+      const payload = {
+        name: formData.className,
+        year: formData.year,
+        semester: formData.semester,
+        department: formData.department
+      };
 
-  } catch (err) {
-    toast.error(`Class creation failed: ${err.message}`);
-    console.error("Class creation error:", err);
-  }
-};
+      const response = await authFetch("/api/classes/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken(),
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create class");
+      }
+
+      toast.success("Class created successfully!");
+
+      // Refresh classes list
+      const classesRes = await fetch("/api/classes/");
+      setClasses(await classesRes.json());
+
+      // Reset form
+      setFormData(prev => ({
+        ...prev,
+        className: "",
+        year: "",
+        semester: "",
+        department: ""
+      }));
+
+    } catch (err) {
+      toast.error(`Class creation failed: ${err.message}`);
+      console.error("Class creation error:", err);
+    }
+  };
 
   const editClass = (classItem) => {
-  setFormData({
-    ...formData,
-    className: classItem.name,
-    year: classItem.year,
-    semester: classItem.semester,
-    department: classItem.department
-  });
-  
-  setEditMode({
-    ...editMode,
-    class: classItem.id
-  });
-  
-  document.getElementById('class-form')?.scrollIntoView({ behavior: 'smooth' });
-};
+    setFormData({
+      ...formData,
+      className: classItem.name,
+      year: classItem.year,
+      semester: classItem.semester,
+      department: classItem.department
+    });
+
+    setEditMode({
+      ...editMode,
+      class: classItem.id
+    });
+
+    document.getElementById('class-form')?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const deleteClass = async (id) => {
     if (window.confirm('Are you sure you want to delete this class?')) {
@@ -200,7 +200,7 @@ export default function AdminPanel({ user }) {
     }
   };
 
-  
+
 
   // User CRUD
   const handleUserSubmit = async (e) => {
@@ -230,36 +230,36 @@ export default function AdminPanel({ user }) {
   };
 
   const deleteUser = async (id) => {
-  // Prevent deleting yourself
-  if (id === user?.id) {
-    toast.error("You cannot delete your own account");
-    return;
-  }
-
-  if (!window.confirm('Are you sure you want to delete this user?')) {
-    return;
-  }
-
-  try {
-    const response = await authFetch(`/api/admin/users/${id}/`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCSRFToken(),
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to delete user');
+    // Prevent deleting yourself
+    if (id === user?.id) {
+      toast.error("You cannot delete your own account");
+      return;
     }
 
-    toast.success('User deleted successfully');
-    fetchAdminData(); // Refresh your user list
-  } catch (err) {
-    toast.error(`Delete failed: ${err.message}`);
-    console.error('Delete error:', err);
-  }
-};
+    if (!window.confirm('Are you sure you want to delete this user?')) {
+      return;
+    }
+
+    try {
+      const response = await authFetch(`/api/admin/users/${id}/`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken(),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete user');
+      }
+
+      toast.success('User deleted successfully');
+      fetchAdminData(); // Refresh your user list
+    } catch (err) {
+      toast.error(`Delete failed: ${err.message}`);
+      console.error('Delete error:', err);
+    }
+  };
 
   const deleteAssignment = async (id) => {
     if (window.confirm('Are you sure you want to remove this assignment?')) {
@@ -269,399 +269,399 @@ export default function AdminPanel({ user }) {
 
   // Enrollment CRUD
   const handleEnrollStudent = async (e) => {
-  e.preventDefault();
-  
-  // Validate form data
-  if (!formData.studentId || !formData.enrollClassId) {
-    toast.error("Please select both student and class");
-    return;
-  }
+    e.preventDefault();
 
-  try {
-    const payload = {
-      student: formData.studentId,
-      enrolled_class: formData.enrollClassId
-    };
-
-    const response = await authFetch("/api/enrollments/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCSRFToken(),
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to enroll student");
+    // Validate form data
+    if (!formData.studentId || !formData.enrollClassId) {
+      toast.error("Please select both student and class");
+      return;
     }
 
-    toast.success("Student enrolled successfully!");
-    
-    // Refresh enrollments list
-    const enrollmentsRes = await fetch("/api/enrollments/");
-    setEnrollments(await enrollmentsRes.json());
-    
-    // Reset form
-    setFormData(prev => ({
-      ...prev,
-      studentId: "",
-      enrollClassId: ""
-    }));
+    try {
+      const payload = {
+        student: formData.studentId,
+        enrolled_class: formData.enrollClassId
+      };
 
-  } catch (err) {
-    toast.error(`Enrollment failed: ${err.message}`);
-    console.error("Enrollment error:", err);
-  }
-};
+      const response = await authFetch("/api/enrollments/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken(),
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to enroll student");
+      }
+
+      toast.success("Student enrolled successfully!");
+
+      // Refresh enrollments list
+      const enrollmentsRes = await fetch("/api/enrollments/");
+      setEnrollments(await enrollmentsRes.json());
+
+      // Reset form
+      setFormData(prev => ({
+        ...prev,
+        studentId: "",
+        enrollClassId: ""
+      }));
+
+    } catch (err) {
+      toast.error(`Enrollment failed: ${err.message}`);
+      console.error("Enrollment error:", err);
+    }
+  };
 
   const handleAssignTeacher = async (e) => {
-  e.preventDefault();
-  
-  // Validate form data
-  if (!formData.teacherId || !formData.classId || !formData.subjectId) {
-    toast.error("Please select a teacher, class, and subject");
-    return;
-  }
+    e.preventDefault();
 
-  try {
-    const response = await authFetch("/api/admin/assign-teacher/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCSRFToken(),
-      },
-      body: JSON.stringify({
-        teacher: formData.teacherId,
-        class_instance: formData.classId,
-        subject: formData.subjectId
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to assign teacher");
+    // Validate form data
+    if (!formData.teacherId || !formData.classId || !formData.subjectId) {
+      toast.error("Please select a teacher, class, and subject");
+      return;
     }
 
-    toast.success("Teacher assigned successfully!");
-    
-    // Refresh assignments list
-    const assignmentsRes = await fetch("/api/assignments/");
-    setAssignments(await assignmentsRes.json());
-    
-    // Reset form
-    setFormData(prev => ({
-      ...prev,
-      teacherId: "",
-      classId: "",
-      subjectId: ""
-    }));
+    try {
+      const response = await authFetch("/api/admin/assign-teacher/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken(),
+        },
+        body: JSON.stringify({
+          teacher: formData.teacherId,
+          class_instance: formData.classId,
+          subject: formData.subjectId
+        }),
+      });
 
-  } catch (err) {
-    toast.error(`Assignment failed: ${err.message}`);
-    console.error("Assignment error:", err);
-  }
-};
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to assign teacher");
+      }
 
-const deleteEnrollment = async (enrollmentId) => {
-  if (!window.confirm('Are you sure you want to remove this enrollment?')) {
-    return;
-  }
+      toast.success("Teacher assigned successfully!");
 
-  try {
-    const response = await authFetch(`/api/enrollments/${enrollmentId}/`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCSRFToken(),
-      },
-    });
+      // Refresh assignments list
+      const assignmentsRes = await fetch("/api/assignments/");
+      setAssignments(await assignmentsRes.json());
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to delete enrollment');
+      // Reset form
+      setFormData(prev => ({
+        ...prev,
+        teacherId: "",
+        classId: "",
+        subjectId: ""
+      }));
+
+    } catch (err) {
+      toast.error(`Assignment failed: ${err.message}`);
+      console.error("Assignment error:", err);
+    }
+  };
+
+  const deleteEnrollment = async (enrollmentId) => {
+    if (!window.confirm('Are you sure you want to remove this enrollment?')) {
+      return;
     }
 
-    toast.success('Enrollment removed successfully');
-    
-    // Refresh enrollments list
-    const enrollmentsRes = await fetch('/api/enrollments/');
-    setEnrollments(await enrollmentsRes.json());
+    try {
+      const response = await authFetch(`/api/enrollments/${enrollmentId}/`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken(),
+        },
+      });
 
-  } catch (err) {
-    toast.error(`Failed to remove enrollment: ${err.message}`);
-    console.error('Delete enrollment error:', err);
-  }
-};
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete enrollment');
+      }
+
+      toast.success('Enrollment removed successfully');
+
+      // Refresh enrollments list
+      const enrollmentsRes = await fetch('/api/enrollments/');
+      setEnrollments(await enrollmentsRes.json());
+
+    } catch (err) {
+      toast.error(`Failed to remove enrollment: ${err.message}`);
+      console.error('Delete enrollment error:', err);
+    }
+  };
 
   // User management functions
   const handleUserAction = async (email, action) => {
-  try {
-    const response = await authFetch("/api/admin/approve-user/", {  // Use your existing endpoint
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCSRFToken(),
-      },
-      body: JSON.stringify({ email, action }),
-    });
+    try {
+      const response = await authFetch("/api/admin/approve-user/", {  // Use your existing endpoint
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken(),
+        },
+        body: JSON.stringify({ email, action }),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Action failed");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Action failed");
+      }
+
+      toast.success(`User ${action}d successfully`);
+
+      // Refresh user list using your existing pending users endpoint
+      const usersRes = await authFetch("/api/admin/pending-users/");
+      setUsers(await usersRes.json());
+
+    } catch (err) {
+      toast.error(`Failed to ${action} user: ${err.message}`);
+      console.error("Action error:", err);
     }
+  };
 
-    toast.success(`User ${action}d successfully`);
-    
-    // Refresh user list using your existing pending users endpoint
-    const usersRes = await authFetch("/api/admin/pending-users/");
-    setUsers(await usersRes.json());
+  const handleCreateClass = async (e) => {
+    e.preventDefault();
 
-  } catch (err) {
-    toast.error(`Failed to ${action} user: ${err.message}`);
-    console.error("Action error:", err);
-  }
-};
+    try {
+      const response = await authFetch("/api/classes/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken(),
+        },
+        body: JSON.stringify({
+          name: formData.className,
+          year: formData.year,
+          semester: formData.semester,
+          department: formData.department
+        }),
+      });
 
-const handleCreateClass = async (e) => {
-  e.preventDefault();
-  
-  try {
-    const response = await authFetch("/api/classes/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCSRFToken(),
-      },
-      body: JSON.stringify({
-        name: formData.className,
-        year: formData.year,
-        semester: formData.semester,
-        department: formData.department
-      }),
-    });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create class");
+      }
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to create class");
+      toast.success("Class created successfully!");
+
+      // Refresh classes list
+      const classesRes = await fetch("/api/classes/");
+      setClasses(await classesRes.json());
+
+      // Reset form
+      resetForm();
+
+    } catch (err) {
+      toast.error(`Class creation failed: ${err.message}`);
+      console.error("Class creation error:", err);
     }
+  };
 
-    toast.success("Class created successfully!");
-    
-    // Refresh classes list
-    const classesRes = await fetch("/api/classes/");
-    setClasses(await classesRes.json());
-    
-    // Reset form
-    resetForm();
+  // class update function
+  const handleUpdateClass = async (e) => {
+    e.preventDefault();
 
-  } catch (err) {
-    toast.error(`Class creation failed: ${err.message}`);
-    console.error("Class creation error:", err);
-  }
-};
+    if (!editMode.class) return;
 
-// class update function
-const handleUpdateClass = async (e) => {
-  e.preventDefault();
-  
-  if (!editMode.class) return;
+    try {
+      const response = await authFetch(`/api/classes/${editMode.class}/`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken(),
+        },
+        body: JSON.stringify({
+          name: formData.className,
+          year: formData.year,
+          semester: formData.semester,
+          department: formData.department
+        }),
+      });
 
-  try {
-    const response = await authFetch(`/api/classes/${editMode.class}/`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCSRFToken(),
-      },
-      body: JSON.stringify({
-        name: formData.className,
-        year: formData.year,
-        semester: formData.semester,
-        department: formData.department
-      }),
-    });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update class');
+      }
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to update class');
+      toast.success('Class updated successfully!');
+
+      // Refresh classes list
+      const classesRes = await fetch('/api/classes/');
+      setClasses(await classesRes.json());
+
+      // Reset form using your existing function
+      resetForm();
+
+    } catch (err) {
+      toast.error(`Update failed: ${err.message}`);
+      console.error('Update class error:', err);
     }
+  };
 
-    toast.success('Class updated successfully!');
-    
-    // Refresh classes list
-    const classesRes = await fetch('/api/classes/');
-    setClasses(await classesRes.json());
-    
-    // Reset form using your existing function
-    resetForm();
-
-  } catch (err) {
-    toast.error(`Update failed: ${err.message}`);
-    console.error('Update class error:', err);
-  }
-};
-
-const editSubject = (subject) => {
-  // Set the form data to the subject being edited
-  setFormData({
-    ...formData,
-    subjectName: subject.name,
-    subjectCode: subject.code,
-  });
-  
-  // Set edit mode with the subject ID
-  setEditMode({
-    ...editMode,
-    subject: subject.id
-  });
-  
-  // Scroll to the form for better UX
-  document.getElementById('subject-form')?.scrollIntoView({ behavior: 'smooth' });
-};
-
-const deleteSubject = async (subjectId) => {
-  if (!window.confirm('Are you sure you want to delete this subject?')) {
-    return;
-  }
-
-  try {
-    const response = await authFetch(`/api/subjects/${subjectId}/`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCSRFToken(),
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to delete subject');
-    }
-
-    toast.success('Subject deleted successfully');
-    
-    // Refresh subjects list
-    const subjectsRes = await fetch('/api/subjects/');
-    setSubjects(await subjectsRes.json());
-
-  } catch (err) {
-    toast.error(`Failed to delete subject: ${err.message}`);
-    console.error('Delete subject error:', err);
-  }
-};
-
-const handleUpdateSubject = async (e) => {
-  e.preventDefault();
-  
-  if (!editMode.subject) return;
-
-  try {
-    const response = await authFetch(`/api/subjects/${editMode.subject}/`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCSRFToken(),
-      },
-      body: JSON.stringify({
-        name: formData.subjectName,
-        code: formData.subjectCode
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to update subject');
-    }
-
-    toast.success('Subject updated successfully!');
-    
-    // Refresh subjects list
-    const subjectsRes = await fetch('/api/subjects/');
-    setSubjects(await subjectsRes.json());
-    
-    // Use your existing resetForm function
-    resetForm();
-
-  } catch (err) {
-    toast.error(`Update failed: ${err.message}`);
-    console.error('Update subject error:', err);
-  }
-};
-
-const handleCreateSubject = async (e) => {
-  e.preventDefault();
-  
-  try {
-    const response = await authFetch("/api/subjects/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCSRFToken(),
-      },
-      body: JSON.stringify({
-        name: formData.subjectName,
-        code: formData.subjectCode
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to create subject");
-    }
-
-    toast.success("Subject created successfully!");
-    
-    // Refresh subjects list
-    const subjectsRes = await fetch("/api/subjects/");
-    setSubjects(await subjectsRes.json());
-    
-    // Reset form
+  const editSubject = (subject) => {
+    // Set the form data to the subject being edited
     setFormData({
       ...formData,
-      subjectName: "",
-      subjectCode: ""
+      subjectName: subject.name,
+      subjectCode: subject.code,
     });
 
-  } catch (err) {
-    toast.error(`Subject creation failed: ${err.message}`);
-    console.error("Subject creation error:", err);
-  }
-};
-
-  const sendFeedback = async () => {
-  try {
-    const response = await authFetch("/api/admin/send-feedback/", {  // Use your existing endpoint
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCSRFToken(),
-      },
-      body: JSON.stringify({ 
-        email: selectedEmail, 
-        feedback: feedbackText 
-      }),
+    // Set edit mode with the subject ID
+    setEditMode({
+      ...editMode,
+      subject: subject.id
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Feedback sending failed");
+    // Scroll to the form for better UX
+    document.getElementById('subject-form')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const deleteSubject = async (subjectId) => {
+    if (!window.confirm('Are you sure you want to delete this subject?')) {
+      return;
     }
 
-    toast.success("Feedback sent successfully!");
-    setFeedbackText("");
-    setSelectedEmail(null);
-    
-    // Refresh user list
-    const usersRes = await authFetch("/api/admin/pending-users/");
-    setUsers(await usersRes.json());
+    try {
+      const response = await authFetch(`/api/subjects/${subjectId}/`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken(),
+        },
+      });
 
-  } catch (err) {
-    toast.error(`Failed to send feedback: ${err.message}`);
-    console.error("Feedback error:", err);
-  }
-};
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete subject');
+      }
+
+      toast.success('Subject deleted successfully');
+
+      // Refresh subjects list
+      const subjectsRes = await fetch('/api/subjects/');
+      setSubjects(await subjectsRes.json());
+
+    } catch (err) {
+      toast.error(`Failed to delete subject: ${err.message}`);
+      console.error('Delete subject error:', err);
+    }
+  };
+
+  const handleUpdateSubject = async (e) => {
+    e.preventDefault();
+
+    if (!editMode.subject) return;
+
+    try {
+      const response = await authFetch(`/api/subjects/${editMode.subject}/`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken(),
+        },
+        body: JSON.stringify({
+          name: formData.subjectName,
+          code: formData.subjectCode
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update subject');
+      }
+
+      toast.success('Subject updated successfully!');
+
+      // Refresh subjects list
+      const subjectsRes = await fetch('/api/subjects/');
+      setSubjects(await subjectsRes.json());
+
+      // Use your existing resetForm function
+      resetForm();
+
+    } catch (err) {
+      toast.error(`Update failed: ${err.message}`);
+      console.error('Update subject error:', err);
+    }
+  };
+
+  const handleCreateSubject = async (e) => {
+    e.preventDefault();
+
+    try {
+      const response = await authFetch("/api/subjects/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken(),
+        },
+        body: JSON.stringify({
+          name: formData.subjectName,
+          code: formData.subjectCode
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create subject");
+      }
+
+      toast.success("Subject created successfully!");
+
+      // Refresh subjects list
+      const subjectsRes = await fetch("/api/subjects/");
+      setSubjects(await subjectsRes.json());
+
+      // Reset form
+      setFormData({
+        ...formData,
+        subjectName: "",
+        subjectCode: ""
+      });
+
+    } catch (err) {
+      toast.error(`Subject creation failed: ${err.message}`);
+      console.error("Subject creation error:", err);
+    }
+  };
+
+  const sendFeedback = async () => {
+    try {
+      const response = await authFetch("/api/admin/send-feedback/", {  // Use your existing endpoint
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken(),
+        },
+        body: JSON.stringify({
+          email: selectedEmail,
+          feedback: feedbackText
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Feedback sending failed");
+      }
+
+      toast.success("Feedback sent successfully!");
+      setFeedbackText("");
+      setSelectedEmail(null);
+
+      // Refresh user list
+      const usersRes = await authFetch("/api/admin/pending-users/");
+      setUsers(await usersRes.json());
+
+    } catch (err) {
+      toast.error(`Failed to send feedback: ${err.message}`);
+      console.error("Feedback error:", err);
+    }
+  };
   // Effects
   useEffect(() => {
     if (!user || user.role !== "admin") {
@@ -677,11 +677,11 @@ const handleCreateSubject = async (e) => {
   return (
     <div className="main-content container ">
       <h1 className="mb-4">Admin Panel</h1>
-      
+
       {/* Tab Navigation */}
       <ul className="nav nav-tabs mb-4">
         <li className="nav-item">
-          <button 
+          <button
             className={`nav-link ${activeTab === 'dashboard' ? 'active' : ''}`}
             onClick={() => setActiveTab('dashboard')}
           >
@@ -689,7 +689,7 @@ const handleCreateSubject = async (e) => {
           </button>
         </li>
         <li className="nav-item">
-          <button 
+          <button
             className={`nav-link ${activeTab === 'users' ? 'active' : ''}`}
             onClick={() => setActiveTab('users')}
           >
@@ -697,7 +697,7 @@ const handleCreateSubject = async (e) => {
           </button>
         </li>
         <li className="nav-item">
-          <button 
+          <button
             className={`nav-link ${activeTab === 'classes' ? 'active' : ''}`}
             onClick={() => setActiveTab('classes')}
           >
@@ -705,7 +705,7 @@ const handleCreateSubject = async (e) => {
           </button>
         </li>
         <li className="nav-item">
-          <button 
+          <button
             className={`nav-link ${activeTab === 'subjects' ? 'active' : ''}`}
             onClick={() => setActiveTab('subjects')}
           >
@@ -746,9 +746,9 @@ const handleCreateSubject = async (e) => {
                 <div className="card-body">
                   <form onSubmit={handleAssignTeacher}>
                     <div className="mb-3">
-                      <select 
-                        name="teacherId" 
-                        className="form-select" 
+                      <select
+                        name="teacherId"
+                        className="form-select"
                         onChange={handleChange}
                         required
                         value={formData.teacherId}
@@ -760,9 +760,9 @@ const handleCreateSubject = async (e) => {
                       </select>
                     </div>
                     <div className="mb-3">
-                      <select 
-                        name="classId" 
-                        className="form-select" 
+                      <select
+                        name="classId"
+                        className="form-select"
                         onChange={handleChange}
                         required
                         value={formData.classId}
@@ -774,9 +774,9 @@ const handleCreateSubject = async (e) => {
                       </select>
                     </div>
                     <div className="mb-3">
-                      <select 
-                        name="subjectId" 
-                        className="form-select" 
+                      <select
+                        name="subjectId"
+                        className="form-select"
                         onChange={handleChange}
                         required
                         value={formData.subjectId}
@@ -803,9 +803,9 @@ const handleCreateSubject = async (e) => {
                 <div className="card-body">
                   <form onSubmit={handleEnrollStudent}>
                     <div className="mb-3">
-                      <select 
-                        name="studentId" 
-                        className="form-select" 
+                      <select
+                        name="studentId"
+                        className="form-select"
                         onChange={handleChange}
                         required
                         value={formData.studentId}
@@ -817,9 +817,9 @@ const handleCreateSubject = async (e) => {
                       </select>
                     </div>
                     <div className="mb-3">
-                      <select 
-                        name="enrollClassId" 
-                        className="form-select" 
+                      <select
+                        name="enrollClassId"
+                        className="form-select"
                         onChange={handleChange}
                         required
                         value={formData.enrollClassId}
@@ -866,7 +866,7 @@ const handleCreateSubject = async (e) => {
                           <td>{classItem?.name || 'Unknown'}</td>
                           <td>{subject?.name || 'Unknown'}</td>
                           <td>
-                            <button 
+                            <button
                               className="btn btn-sm btn-danger"
                               onClick={() => deleteAssignment(assignment.id)}
                             >
@@ -908,7 +908,7 @@ const handleCreateSubject = async (e) => {
                           <td>{classItem?.name || 'Unknown'}</td>
                           <td>{new Date(enrollment.enrolled_on).toLocaleDateString()}</td>
                           <td>
-                            <button 
+                            <button
                               className="btn btn-sm btn-danger"
                               onClick={() => deleteEnrollment(enrollment.id)}
                             >
@@ -1029,18 +1029,16 @@ const handleCreateSubject = async (e) => {
                         <td>{user.name}</td>
                         <td>{user.email}</td>
                         <td>
-                          <span className={`badge ${
-                            user.role === 'teacher' ? 'bg-info' :
-                            user.role === 'admin' ? 'bg-danger' : 'bg-primary'
-                          }`}>
+                          <span className={`badge ${user.role === 'teacher' ? 'bg-info' :
+                              user.role === 'admin' ? 'bg-danger' : 'bg-primary'
+                            }`}>
                             {user.role}
                           </span>
                         </td>
                         <td>
-                          <span className={`badge ${
-                            user.approval_status === 'approved' ? 'bg-success' :
-                            user.approval_status === 'unapproved' ? 'bg-danger' : 'bg-warning'
-                          }`}>
+                          <span className={`badge ${user.approval_status === 'approved' ? 'bg-success' :
+                              user.approval_status === 'unapproved' ? 'bg-danger' : 'bg-warning'
+                            }`}>
                             {user.approval_status || 'pending'}
                           </span>
                         </td>
@@ -1063,7 +1061,7 @@ const handleCreateSubject = async (e) => {
                             >
                               Delete
                             </button>
-                              
+
                             {user.approval_status !== 'approved' && (
                               <button
                                 className="btn btn-sm btn-success"
@@ -1081,9 +1079,8 @@ const handleCreateSubject = async (e) => {
                               </button>
                             )}
                             <button
-                              className={`btn btn-sm ${
-                                selectedEmail === user.email ? 'btn-secondary' : 'btn-info'
-                              }`}
+                              className={`btn btn-sm ${selectedEmail === user.email ? 'btn-secondary' : 'btn-info'
+                                }`}
                               onClick={() => setSelectedEmail(
                                 selectedEmail === user.email ? null : user.email
                               )}
@@ -1145,7 +1142,7 @@ const handleCreateSubject = async (e) => {
               <h5 className="mb-0">{editMode.class ? 'Edit Class' : 'Create New Class'}</h5>
             </div>
             <div className="card-body">
-              <form onSubmit={editMode.class ? handleUpdateClass : handleCreateClass}>                
+              <form onSubmit={editMode.class ? handleUpdateClass : handleCreateClass}>
                 <div className="row g-3">
                   <div className="col-md-6">
                     <label className="form-label">Class Name</label>
@@ -1273,7 +1270,7 @@ const handleCreateSubject = async (e) => {
               <h5 className="mb-0">{editMode.subject ? 'Edit Subject' : 'Create New Subject'}</h5>
             </div>
             <div className="card-body">
-              <form onSubmit={editMode.subject ? handleUpdateSubject : handleCreateSubject}>                
+              <form onSubmit={editMode.subject ? handleUpdateSubject : handleCreateSubject}>
                 <div className="row g-3">
                   <div className="col-md-8">
                     <label className="form-label">Subject Name</label>
