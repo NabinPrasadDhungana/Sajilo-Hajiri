@@ -34,6 +34,8 @@ from django.utils.encoding import force_bytes
 from django.db import transaction
 from django.core.files.storage import default_storage
 
+import cv2
+
 User = get_user_model()
 
 # Authentication Views
@@ -624,8 +626,8 @@ class AttendanceFaceRecognitionView(APIView):
                 img_data = base64.b64decode(img_b64)
                 nparr = np.frombuffer(img_data, np.uint8)
                 print(f"Decoding image of size {nparr} bytes.")
-                import cv2
                 img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                
             except Exception:
                 continue
             faces = face_recognition.face_encodings(img)
