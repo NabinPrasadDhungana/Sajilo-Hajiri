@@ -586,12 +586,9 @@ class AttendanceFaceRecognitionView(APIView):
         }
         """
         user = request.user
-        print(f"User {user.username} is trying to mark attendance.")
         session_id = request.data.get('session_id')
         images = request.data.get('images', [])
         mode = request.data.get('mode', 'entry')
-
-        print(f"Session ID: {session_id}, Mode: {mode}, Number of images: {len(images)}")
 
         # Validate session
         try:
@@ -608,13 +605,10 @@ class AttendanceFaceRecognitionView(APIView):
         students = [e.student for e in enrollments]
         encodings = []
         student_ids = []
-        print(f"Found {len(students)} enrolled students for this session.")
         for student in students:
             try:
-                print(f"Processing face encoding for student: {student.username}")
                 face_enc = FaceEncoding.objects.get(student=student)
                 encoding = np.array(eval(face_enc.encoding_data))
-                print(encoding)
                 encodings.append(encoding)
                 student_ids.append(student.id)
             except FaceEncoding.DoesNotExist:
@@ -625,14 +619,12 @@ class AttendanceFaceRecognitionView(APIView):
             try:
                 img_data = base64.b64decode(img_b64)
                 nparr = np.frombuffer(img_data, np.uint8)
-                print(f"Decoding image of size {nparr} bytes.")
                 img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
                 
             except Exception:
                 continue
             faces = face_recognition.face_encodings(img)
             
-            print(f"Detected {len(faces)} face(s) in image.")
             for face in faces:
                 matches = face_recognition.compare_faces(encodings, face, tolerance=0.5)
                 for idx, match in enumerate(matches):
