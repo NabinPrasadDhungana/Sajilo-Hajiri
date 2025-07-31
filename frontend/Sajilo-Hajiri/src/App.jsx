@@ -13,6 +13,7 @@ import Dashboard from "./components/Dashboard";
 import StudentHistoryModal from "./components/Dashboard/StudentHistoryModal";
 import Footer from "./components/Footer/Footer";
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 import "./App.css"
 import { authFetch } from "./Helper/Csrf_token";
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
