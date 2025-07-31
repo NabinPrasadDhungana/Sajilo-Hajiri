@@ -3,7 +3,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+import base64
+import numpy as np
+import face_recognition
+from datetime import date, datetime
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 
 from django.contrib.auth import authenticate, login, logout
@@ -351,7 +355,6 @@ class DashboardAPIView(APIView):
 
     def _get_teacher_data(self, user):
         class_subjects = ClassSubject.objects.select_related('class_instance', 'subject').filter(teacher=user)
-        
         teaching_data = []
         for cs in class_subjects:
             students = User.objects.filter(
@@ -359,11 +362,11 @@ class DashboardAPIView(APIView):
                 role='student'
             )
             teaching_data.append({
+                "id": cs.id,  # Add ClassSubject id for frontend
                 "class": cs.class_instance.name,
                 "subject": cs.subject.name,
                 "students": UserSerializer(students, many=True).data
             })
-
         return {"teaching": teaching_data}
 
 # Admin Management Views
@@ -535,3 +538,202 @@ class StudentAttendanceView(APIView):
         } for record in records]
 
         return Response(data, status=status.HTTP_200_OK)
+    
+# --- Attendance Session Creation (Teacher) ---
+class CreateAttendanceSessionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        class_subject_id = request.data.get('class_subject_id')
+        session_title = request.data.get('session_title', None)
+        is_manual_allowed = request.data.get('is_manual_allowed', False)
+
+        # Check teacher is assigned to this class_subject
+        try:
+            class_subject = ClassSubject.objects.get(id=class_subject_id, teacher=user.id)
+        except ClassSubject.DoesNotExist:
+            return Response({'error': 'You are not assigned to this class/subject.'}, status=403)
+
+        today = date.today()
+        # Prevent duplicate open session for same class/subject and date
+        if AttendanceSession.objects.filter(class_subject=class_subject, date=today, status='open').exists():
+            return Response({'error': 'An open attendance session already exists for today.'}, status=400)
+
+        session = AttendanceSession.objects.create(
+            class_subject=class_subject,
+            session_title=session_title,
+            date=today,
+            started_by=user,
+            is_manual_allowed=is_manual_allowed,
+            status='open',
+        )
+        return Response({'message': 'Attendance session created.', 'session_id': session.id}, status=201)
+
+# --- Attendance via Face Recognition (Entry/Exit) ---
+class AttendanceFaceRecognitionView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser]
+
+    def post(self, request):
+        """
+        Expects: {
+            'session_id': int,
+            'images': [base64 strings],
+            'mode': 'entry' or 'exit'
+        }
+        """
+        user = request.user
+        print(f"User {user.username} is trying to mark attendance.")
+        session_id = request.data.get('session_id')
+        images = request.data.get('images', [])
+        mode = request.data.get('mode', 'entry')
+
+        print(f"Session ID: {session_id}, Mode: {mode}, Number of images: {len(images)}")
+
+        # Validate session
+        try:
+            session = AttendanceSession.objects.get(id=session_id, status='open')
+        except AttendanceSession.DoesNotExist:
+            return Response({'error': 'Session not found or closed.'}, status=404)
+
+        # Only teacher who started session can mark attendance
+        if session.started_by != user:
+            return Response({'error': 'You are not authorized for this session.'}, status=403)
+
+        # Get enrolled students and their encodings
+        enrollments = StudentClassEnrollment.objects.filter(enrolled_class=session.class_subject.class_instance)
+        students = [e.student for e in enrollments]
+        encodings = []
+        student_ids = []
+        print(f"Found {len(students)} enrolled students for this session.")
+        for student in students:
+            try:
+                print(f"Processing face encoding for student: {student.username}")
+                face_enc = FaceEncoding.objects.get(student=student)
+                encoding = np.array(eval(face_enc.encoding_data))
+                print(encoding)
+                encodings.append(encoding)
+                student_ids.append(student.id)
+            except FaceEncoding.DoesNotExist:
+                continue
+
+        recognized = []
+        for img_b64 in images:
+            try:
+                img_data = base64.b64decode(img_b64)
+                nparr = np.frombuffer(img_data, np.uint8)
+                print(f"Decoding image of size {nparr} bytes.")
+                import cv2
+                img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            except Exception:
+                continue
+            faces = face_recognition.face_encodings(img)
+            
+            print(f"Detected {len(faces)} face(s) in image.")
+            for face in faces:
+                matches = face_recognition.compare_faces(encodings, face, tolerance=0.5)
+                for idx, match in enumerate(matches):
+                    if match:
+                        student_id = student_ids[idx]
+                        recognized.append(student_id)
+        if not recognized:
+            return Response({'message': 'No faces recognized.'}, status=200)
+
+        recognized = list(set(recognized))
+        now = datetime.now()
+        results = []
+        for sid in recognized:
+            student = User.objects.get(id=sid)
+            record, created = AttendanceRecord.objects.get_or_create(
+                attendance_session=session,
+                student=student,
+                defaults={
+                    'entry_status': 'present' if mode == 'entry' else 'absent',
+                    'entry_method': 'facial',
+                    'entry_time': now if mode == 'entry' else None,
+                }
+            )
+            if not created:
+                if mode == 'entry' and not record.entry_time:
+                    record.entry_status = 'present'
+                    record.entry_method = 'facial'
+                    record.entry_time = now
+                elif mode == 'exit':
+                    record.exit_status = 'present'
+                    record.exit_method = 'facial'
+                    record.exit_time = now
+                record.save()
+            results.append({
+                'student_id': sid,
+                'name': student.name,
+                'mode': mode,
+                'status': 'marked',
+            })
+        return Response({'recognized': results}, status=200)
+
+# --- Manual Attendance Marking ---
+class ManualAttendanceView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """
+        Expects: {
+            'session_id': int,
+            'student_id': int,
+            'mode': 'entry' or 'exit'
+        }
+        """
+        user = request.user
+        session_id = request.data.get('session_id')
+        student_id = request.data.get('student_id')
+        mode = request.data.get('mode', 'entry')
+
+        try:
+            session = AttendanceSession.objects.get(id=session_id, status='open')
+        except AttendanceSession.DoesNotExist:
+            return Response({'error': 'Session not found or closed.'}, status=404)
+
+        if session.started_by != user:
+            return Response({'error': 'You are not authorized for this session.'}, status=403)
+
+        try:
+            student = User.objects.get(id=student_id, role='student')
+        except User.DoesNotExist:
+            return Response({'error': 'Student not found.'}, status=404)
+
+        now = datetime.now()
+        record, created = AttendanceRecord.objects.get_or_create(
+            attendance_session=session,
+            student=student,
+            defaults={
+                'entry_status': 'manual-present' if mode == 'entry' else 'absent',
+                'entry_method': 'manual',
+                'entry_time': now if mode == 'entry' else None,
+            }
+        )
+        if not created:
+            if mode == 'entry' and not record.entry_time:
+                record.entry_status = 'manual-present'
+                record.entry_method = 'manual'
+                record.entry_time = now
+            elif mode == 'exit':
+                record.exit_status = 'manual-exit'
+                record.exit_method = 'manual'
+                record.exit_time = now
+            record.save()
+        return Response({'message': f'Manual {mode} marked for {student.name}.'}, status=200)
+
+# Endpoint to get open attendance session for a class_subject_id (CBV)
+class GetOpenAttendanceSessionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        class_subject_id = request.GET.get('class_subject_id')
+        if not class_subject_id:
+            return Response({'error': 'class_subject_id is required'}, status=400)
+        try:
+            session = AttendanceSession.objects.get(class_subject_id=class_subject_id, date=date.today(), status='open')
+            return Response({'session_id': session.id})
+        except AttendanceSession.DoesNotExist:
+            return Response({'session_id': None})

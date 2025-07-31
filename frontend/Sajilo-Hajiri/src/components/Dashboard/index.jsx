@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import TeacherAttendanceSession from '../TeacherAttendanceSession';
 import { useNavigate } from "react-router-dom";
 import AdminPanel from "../AdminPanel";
 import { authFetch } from "../../Helper/Csrf_token";
@@ -8,6 +9,7 @@ export default function Dashboard({ user }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeSession, setActiveSession] = useState(null); // For teacher attendance session
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -227,6 +229,25 @@ export default function Dashboard({ user }) {
               <h5 className="card-title">
                 Class: <span className="text-primary">{assignment.class}</span> | Subject: <strong>{assignment.subject}</strong>
               </h5>
+              <button
+                className="btn btn-success mb-2"
+                onClick={() => setActiveSession({
+                  classSubjectId: assignment.id, // Always use ClassSubject id
+                  sessionTitle: `${assignment.subject} - ${new Date().toLocaleDateString()}`
+                })}
+              >
+                Start Attendance Session
+              </button>
+              {activeSession && activeSession.classSubjectId === assignment.id && (
+                <div className="mt-3">
+                  <TeacherAttendanceSession
+                    classSubjectId={activeSession.classSubjectId}
+                    sessionTitle={activeSession.sessionTitle}
+                    students={assignment.students}
+                  />
+                  <button className="btn btn-link mt-2" onClick={() => setActiveSession(null)}>Close Attendance Session</button>
+                </div>
+              )}
               <h6 className="mt-3">👨‍🎓 Students Enrolled:</h6>
               {assignment.students?.length > 0 ? (
                 <ul className="list-group list-group-flush">

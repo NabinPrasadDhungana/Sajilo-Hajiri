@@ -1,3 +1,4 @@
+import TeacherAttendanceSession from './components/TeacherAttendanceSession';
 // App.jsx
 import React, { useState, useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
@@ -170,6 +171,9 @@ export default function App() {
         <Route path="/not-authorized" element={<NotAuthorized />} />
         <Route path="/forgot-password" element={<ForgotPasswordForm />} />
         <Route path="/reset-password/:uidb64/:token" element={<PasswordResetForm />} />
+
+        {/* Demo route for teacher attendance session */}
+        <Route path="/teacher/attendance-session" element={<TeacherAttendanceSession classSubjectId={1} sessionTitle={"Physics - July 30"} />} />
       </Routes>
 
       <Footer />
