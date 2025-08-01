@@ -4,12 +4,16 @@ import { useNavigate } from "react-router-dom";
 import AdminPanel from "../AdminPanel";
 import { authFetch } from "../../Helper/Csrf_token";
 import Register from "../Register";
+import StudentRecords from '../StudentRecords';
 
 export default function Dashboard({ user }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeSession, setActiveSession] = useState(null); // For teacher attendance session
+  // Move student attendance pagination hooks to top level
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -156,12 +160,37 @@ export default function Dashboard({ user }) {
     );
   }
 
+  // Always declare hooks at the top, not inside conditionals
+  // Prepare student dashboard variables
+  let student = null, summaryBySubject = {}, sortedSubjects = [], totalPages = 1, startIdx = 0, endIdx = 0, pagedAttendance = [];
+  if (user && user.role === "student" && data && data.student_data) {
+    student = data.student_data;
+    // Attendance summary by subject
+    const getAttendanceSummaryBySubject = attendance => {
+      const summary = {};
+      attendance.forEach(a => {
+        const subj = a.subject || 'Unknown';
+        if (!summary[subj]) summary[subj] = { present: 0, absent: 0, total: 0 };
+        if (a.entry_status === 'present' || a.entry_status === 'manual-present') {
+          summary[subj].present += 1;
+        } else {
+          summary[subj].absent += 1;
+        }
+        summary[subj].total += 1;
+      });
+      return summary;
+    };
+    summaryBySubject = getAttendanceSummaryBySubject(student.attendance || []);
+    sortedSubjects = Object.keys(summaryBySubject).sort();
+    totalPages = Math.ceil((student.attendance?.length || 0) / PAGE_SIZE) || 1;
+    startIdx = (currentPage - 1) * PAGE_SIZE;
+    endIdx = startIdx + PAGE_SIZE;
+    pagedAttendance = (student.attendance || []).slice(startIdx, endIdx);
+  }
   if (user.role === "student") {
-    const student = data.student_data;
     if (!student) {
       return <div className="main-content container  alert alert-warning">⚠️ You are not enrolled in any class yet.</div>;
     }
-
     return (
       <div className="main-content container ">
         <h2 className="mb-4">Welcome, {user.name || user.username} 👨‍🎓</h2>
@@ -170,7 +199,6 @@ export default function Dashboard({ user }) {
             <h5 className="card-title">📚 Class: <span className="text-primary">{student.class}</span></h5>
           </div>
         </div>
-
         <div className="card mb-4 shadow-sm">
           <div className="card-body">
             <h5 className="card-title">📘 Subjects:</h5>
@@ -187,24 +215,74 @@ export default function Dashboard({ user }) {
             )}
           </div>
         </div>
-
+        <div className="card shadow-sm mb-4">
+          <div className="card-body">
+            <h5 className="card-title">📝 Attendance Summary by Subject:</h5>
+            {sortedSubjects.length === 0 ? (
+              <span className="text-muted">No attendance records found.</span>
+            ) : (
+              <ul className="list-unstyled mb-0">
+                {sortedSubjects.map(subj => {
+                  const stats = summaryBySubject[subj];
+                  const percent = stats.total ? Math.round((stats.present / stats.total) * 100) : 0;
+                  let color = 'secondary';
+                  if (percent >= 75) color = 'success';
+                  else if (percent >= 50) color = 'warning';
+                  else color = 'danger';
+                  return (
+                    <li key={subj}>
+                      <span className="fw-bold">{subj}:</span>
+                      <span className="badge bg-success ms-2">Present: {stats.present}</span>
+                      <span className="badge bg-danger ms-2">Absent: {stats.absent}</span>
+                      <span className={`badge bg-${color} ms-2`} title={`Attendance: ${percent}%`}>{percent}%</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </div>
         <div className="card shadow-sm">
           <div className="card-body">
             <h5 className="card-title">📝 Recent Attendance Records:</h5>
-            {student.attendance?.length > 0 ? (
-              <ul className="list-group list-group-flush">
-                {student.attendance.map((record) => (
-                  <li key={record.id} className="list-group-item">
-                    <strong>{record.subject_name}</strong><br />
-                    <span className="text-muted">
-                      {new Date(record.entry_time).toLocaleString()} — {record.entry_status}
-                      {record.exit_time && (
-                        <> → {new Date(record.exit_time).toLocaleString()} — {record.exit_status}</>
-                      )}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+            {(student.attendance?.length > 0) ? (
+              <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+                <table className="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Subject</th>
+                      <th>Entry Status</th>
+                      <th>Exit Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pagedAttendance.map((record) => (
+                      <tr key={record.id}>
+                        <td>{record.date}</td>
+                        <td>{record.subject}</td>
+                        <td>{record.entry_status}</td>
+                        <td>{record.exit_status}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="d-flex justify-content-between align-items-center mt-2">
+                  <span>Page {currentPage} of {totalPages}</span>
+                  <div>
+                    <button
+                      className="btn btn-outline-primary btn-sm me-2"
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                    >Prev</button>
+                    <button
+                      className="btn btn-outline-primary btn-sm"
+                      disabled={currentPage === totalPages}
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                    >Next</button>
+                  </div>
+                </div>
+              </div>
             ) : (
               <p className="text-muted">No attendance records found.</p>
             )}
@@ -219,6 +297,16 @@ export default function Dashboard({ user }) {
     if (!teacher || teacher.teaching.length === 0) {
       return <div className="main-content container  alert alert-info">📘 You are not assigned to teach any classes yet.</div>;
     }
+
+    // Build subject options for filter
+    const subjectOptions = teacher.teaching.map(t => ({ value: t.id, label: `${t.class} - ${t.subject}` }));
+    const filtersConfig = [
+      { name: 'subject_id', label: 'Subject', type: 'select', options: subjectOptions },
+      { name: 'date', label: 'Date', type: 'date' },
+      { name: 'status', label: 'Status', type: 'text' },
+      { name: 'name', label: 'Student Name', type: 'text' },
+      { name: 'roll_number', label: 'Roll Number', type: 'text' },
+    ];
 
     return (
       <div className="main-content container ">
@@ -273,6 +361,14 @@ export default function Dashboard({ user }) {
             </div>
           </div>
         ))}
+        <div className="card my-4">
+          <div className="card-header bg-info text-white">
+            <h5 className="mb-0">Student Records for Your Subjects</h5>
+          </div>
+          <div className="card-body">
+            <StudentRecords apiUrl="/api/teacher/student-records/" filtersConfig={filtersConfig} title="Teacher: Student Records" />
+          </div>
+        </div>
       </div>
     );
   }

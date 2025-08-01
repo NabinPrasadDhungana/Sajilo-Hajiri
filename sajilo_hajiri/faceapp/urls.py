@@ -33,6 +33,9 @@ urlpatterns = [
     path('subjects/<int:pk>/', SubjectDetailView.as_view(), name='subject-detail'),
     path('teachers/', ListTeachers.as_view(), name='list-teachers'),
     path('students/', ListStudents.as_view(), name='list-students'),
+    # Student records endpoints
+    path('teacher/student-records/', TeacherStudentRecordsView.as_view(), name='teacher-student-records'),
+    path('admin/student-records/', AdminStudentRecordsView.as_view(), name='admin-student-records'),
     # Class URLs
     path('classes/<int:pk>/', ClassDetailView.as_view(), name='class-detail'),
     

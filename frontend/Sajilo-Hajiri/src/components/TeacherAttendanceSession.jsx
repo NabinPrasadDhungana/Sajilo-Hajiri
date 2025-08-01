@@ -77,14 +77,15 @@ function TeacherAttendanceSession({ classSubjectId, students, sessionTitle }) {
     setAlert({ type: 'info', message: 'Recognition complete.' });
   };
 
-  const markManual = async (studentId, mode) => {
+  const markManual = async (rollNumber, mode) => {
+    console.log(`Marking student with roll number ${rollNumber} as ${mode} in session ${sessionId}`);
     const res = await fetch(`/api/attendance/manual/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-CSRFToken': getCSRFToken(),
       },
-      body: JSON.stringify({ session_id: sessionId, student_id: studentId, mode }),
+      body: JSON.stringify({ session_id: sessionId, roll_number: rollNumber, mode }),
       credentials: 'include',
     });
     const data = await res.json();
@@ -227,21 +228,22 @@ function TeacherAttendanceSession({ classSubjectId, students, sessionTitle }) {
               </button>
               <div className={showManual ? 'collapse show' : 'collapse'} id="manualAttendance">
                 <ul className="list-group">
+                  {console.log('Students:', students)}
                   {Array.isArray(students) && students.length > 0 ? (
                     students.map(s => (
-                      <li className="list-group-item d-flex justify-content-between align-items-center" key={s.id}>
-                        <span>{s.name}</span>
+                      <li className="list-group-item d-flex justify-content-between align-items-center" key={s.roll_number}>
+                        <span>{s.name} <span className="text-muted">({s.roll_number})</span></span>
                         <span>
                           <button
                             className="btn btn-success btn-sm me-2"
-                            onClick={() => markManual(s.id, 'entry')}
+                            onClick={() => markManual(s.roll_number, 'entry')}
                           >
                             <i className="bi bi-box-arrow-in-right me-1"></i>
                             Entry
                           </button>
                           <button
                             className="btn btn-danger btn-sm"
-                            onClick={() => markManual(s.id, 'exit')}
+                            onClick={() => markManual(s.roll_number, 'exit')}
                           >
                             <i className="bi bi-box-arrow-right me-1"></i>
                             Exit

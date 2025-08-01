@@ -36,6 +36,9 @@ from django.core.files.storage import default_storage
 
 import cv2
 
+from django.db.models import Q
+from rest_framework.generics import ListAPIView
+
 User = get_user_model()
 
 # Authentication Views
@@ -674,13 +677,14 @@ class ManualAttendanceView(APIView):
         """
         Expects: {
             'session_id': int,
-            'student_id': int,
+            'roll_number': str,
             'mode': 'entry' or 'exit'
         }
         """
         user = request.user
         session_id = request.data.get('session_id')
-        student_id = request.data.get('student_id')
+        roll_number = request.data.get('roll_number')
+        print(f"Session ID: {session_id}, Roll Number: {roll_number}")
         mode = request.data.get('mode', 'entry')
 
         try:
@@ -692,7 +696,7 @@ class ManualAttendanceView(APIView):
             return Response({'error': 'You are not authorized for this session.'}, status=403)
 
         try:
-            student = User.objects.get(id=student_id, role='student')
+            student = User.objects.get(roll_number=roll_number, role='student')
         except User.DoesNotExist:
             return Response({'error': 'Student not found.'}, status=404)
 
@@ -731,3 +735,112 @@ class GetOpenAttendanceSessionView(APIView):
             return Response({'session_id': session.id})
         except AttendanceSession.DoesNotExist:
             return Response({'session_id': None})
+
+# --- Student Records for Teacher/Admin ---
+class TeacherStudentRecordsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.role != 'teacher':
+            return Response({'error': 'Unauthorized'}, status=403)
+
+        # Get subjects/classes taught by teacher
+        class_subjects = ClassSubject.objects.filter(teacher=user)
+        enrolled_classes = class_subjects.values_list('class_instance', flat=True)
+        subjects = class_subjects.values_list('subject', flat=True)
+
+        # Filters
+        subject_id = request.GET.get('subject_id')
+        date_filter = request.GET.get('date')
+        status_filter = request.GET.get('status')
+        name = request.GET.get('name')
+        roll_number = request.GET.get('roll_number')
+
+        # Get students enrolled in teacher's classes
+        enrollments = StudentClassEnrollment.objects.filter(enrolled_class__in=enrolled_classes)
+        students = User.objects.filter(id__in=enrollments.values('student'), role='student')
+        if name:
+            students = students.filter(name__icontains=name)
+        if roll_number:
+            students = students.filter(roll_number__icontains=roll_number)
+
+        # Get attendance records for these students
+        records = AttendanceRecord.objects.filter(student__in=students)
+        if subject_id:
+            records = records.filter(attendance_session__class_subject__subject_id=subject_id)
+        if date_filter:
+            records = records.filter(attendance_session__date=date_filter)
+        if status_filter:
+            records = records.filter(Q(entry_status=status_filter) | Q(exit_status=status_filter))
+
+        data = []
+        for student in students:
+            student_records = records.filter(student=student)
+            data.append({
+                'student_id': student.id,
+                'name': student.name,
+                'roll_number': student.roll_number,
+                'attendance': [
+                    {
+                        'id': r.id,
+                        'date': r.attendance_session.date,
+                        'subject': r.attendance_session.class_subject.subject.name,
+                        'entry_status': r.entry_status,
+                        'exit_status': r.exit_status,
+                        'entry_time': r.entry_time,
+                        'exit_time': r.exit_time,
+                    } for r in student_records
+                ]
+            })
+        return Response(data)
+
+class AdminStudentRecordsView(APIView):
+    permission_classes = [IsCustomAdmin]
+
+    def get(self, request):
+        # Filters
+        class_id = request.GET.get('class_id')
+        subject_id = request.GET.get('subject_id')
+        date_filter = request.GET.get('date')
+        status_filter = request.GET.get('status')
+        name = request.GET.get('name')
+        roll_number = request.GET.get('roll_number')
+
+        students = User.objects.filter(role='student')
+        if name:
+            students = students.filter(name__icontains=name)
+        if roll_number:
+            students = students.filter(roll_number__icontains=roll_number)
+        if class_id:
+            enrollments = StudentClassEnrollment.objects.filter(enrolled_class_id=class_id)
+            students = students.filter(id__in=enrollments.values('student'))
+
+        records = AttendanceRecord.objects.filter(student__in=students)
+        if subject_id:
+            records = records.filter(attendance_session__class_subject__subject_id=subject_id)
+        if date_filter:
+            records = records.filter(attendance_session__date=date_filter)
+        if status_filter:
+            records = records.filter(Q(entry_status=status_filter) | Q(exit_status=status_filter))
+
+        data = []
+        for student in students:
+            student_records = records.filter(student=student)
+            data.append({
+                'student_id': student.id,
+                'name': student.name,
+                'roll_number': student.roll_number,
+                'attendance': [
+                    {
+                        'id': r.id,
+                        'date': r.attendance_session.date,
+                        'subject': r.attendance_session.class_subject.subject.name,
+                        'entry_status': r.entry_status,
+                        'exit_status': r.exit_status,
+                        'entry_time': r.entry_time,
+                        'exit_time': r.exit_time,
+                    } for r in student_records
+                ]
+            })
+        return Response(data)
