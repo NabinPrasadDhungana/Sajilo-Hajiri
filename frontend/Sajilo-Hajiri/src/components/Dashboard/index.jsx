@@ -188,13 +188,17 @@ export default function Dashboard({ user }) {
     sortedSubjects = Object.keys(summaryBySubject).sort();
 
     // Filtering logic
+    // Build subject options from attendance records for exact match
+    const subjectNames = Array.from(new Set((student.attendance || []).map(r => r.subject_name).filter(Boolean)));
+    const subjectOptions = subjectNames.map(name => ({ value: name, label: name })) || [];
+
     let filteredAttendance = (student.attendance || []).filter(record => {
       let match = true;
-      if (filterSubject && record.subject_name !== filterSubject) match = false;
+      if (filterSubject && record.subject_name && record.subject_name.trim().toLowerCase() !== filterSubject.trim().toLowerCase()) match = false;
       if (filterDate && record.date !== filterDate) match = false;
       if (filterStatus && record.entry_status !== filterStatus && record.exit_status !== filterStatus) match = false;
       if (searchText && !(
-        (record.subject_name && record.subject_name.toLowerCase().includes(searchText.toLowerCase())) ||
+        (record.subject_name && record.subject_name.toLowerCase().includes(searchText.trim().toLowerCase())) ||
         (record.entry_status && record.entry_status.toLowerCase().includes(searchText.toLowerCase())) ||
         (record.exit_status && record.exit_status.toLowerCase().includes(searchText.toLowerCase())) ||
         (record.date && record.date.includes(searchText))
@@ -211,8 +215,6 @@ export default function Dashboard({ user }) {
     if (!student) {
       return <div className="main-content container  alert alert-warning">⚠️ You are not enrolled in any class yet.</div>;
     }
-    // Subject options for filter dropdown
-    const subjectOptions = student.subjects?.map(subj => ({ value: subj.name, label: `${subj.name} (${subj.code})` })) || [];
     // Status options for filter dropdown
     const statusOptions = [
       { value: '', label: 'All' },
