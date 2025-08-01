@@ -165,7 +165,7 @@ export default function Dashboard({ user }) {
   }
 
   // Prepare student dashboard variables
-  let student = null, summaryBySubject = {}, sortedSubjects = [], totalPages = 1, startIdx = 0, endIdx = 0, pagedAttendance = [];
+  let student = null, summaryBySubject = {}, sortedSubjects = [], totalPages = 1, startIdx = 0, endIdx = 0, pagedAttendance = [], subjectOptions = [];
 
   if (user && user.role === "student" && data && data.student_data) {
     student = data.student_data;
@@ -187,10 +187,9 @@ export default function Dashboard({ user }) {
     summaryBySubject = getAttendanceSummaryBySubject(student.attendance || []);
     sortedSubjects = Object.keys(summaryBySubject).sort();
 
-    // Filtering logic
     // Build subject options from attendance records for exact match
     const subjectNames = Array.from(new Set((student.attendance || []).map(r => r.subject_name).filter(Boolean)));
-    const subjectOptions = subjectNames.map(name => ({ value: name, label: name })) || [];
+    subjectOptions = subjectNames.map(name => ({ value: name, label: name })) || [];
 
     let filteredAttendance = (student.attendance || []).filter(record => {
       let match = true;
