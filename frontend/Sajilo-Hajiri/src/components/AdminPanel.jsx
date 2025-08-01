@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { authFetch } from "../Helper/Csrf_token";
 import { toast } from 'react-toastify';
+import StudentRecords from './StudentRecords';
 
 export default function AdminPanel({ user }) {
   const navigate = useNavigate();
@@ -688,8 +689,20 @@ export default function AdminPanel({ user }) {
   if (isLoading) return <div className="main-content container  text-center">Loading...</div>;
   if (error) return <div className="main-content container  alert alert-danger">{error}</div>;
 
+  // Example options for filters (fetch from API if needed)
+  const classOptions = classes?.map(c => ({ value: c.id, label: c.name })) || [];
+  const subjectOptions = subjects?.map(s => ({ value: s.id, label: s.name })) || [];
+  const filtersConfig = [
+    { name: 'class_id', label: 'Class', type: 'select', options: classOptions },
+    { name: 'subject_id', label: 'Subject', type: 'select', options: subjectOptions },
+    { name: 'date', label: 'Date', type: 'date' },
+    { name: 'status', label: 'Status', type: 'text' },
+    { name: 'name', label: 'Student Name', type: 'text' },
+    { name: 'roll_number', label: 'Roll Number', type: 'text' },
+  ];
+
   return (
-    <div className="main-content container ">
+    <div className="container-fluid">
       <h1 className="mb-4">Admin Panel</h1>
 
       {/* Tab Navigation */}
@@ -1411,6 +1424,15 @@ export default function AdminPanel({ user }) {
           </div>
         </div>
       )}
+
+      <div className="card my-4">
+        <div className="card-header bg-primary text-white">
+          <h5 className="mb-0">All Student Records</h5>
+        </div>
+        <div className="card-body">
+          <StudentRecords apiUrl="/api/admin/student-records/" filtersConfig={filtersConfig} title="Admin: Student Records" />
+        </div>
+      </div>
     </div>
   );
 }

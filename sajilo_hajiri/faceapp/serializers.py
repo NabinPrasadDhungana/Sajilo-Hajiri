@@ -56,9 +56,14 @@ class AttendanceSessionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class AttendanceRecordSerializer(serializers.ModelSerializer):
+    subject_name = serializers.CharField(source='attendance_session.class_subject.subject.name', read_only=True)
+    subject_code = serializers.CharField(source='attendance_session.class_subject.subject.code', read_only=True)
     class Meta:
         model = AttendanceRecord
-        fields = '__all__'
+        fields = [
+    'id', 'attendance_session', 'student', 'entry_status', 'entry_method', 'entry_time',
+    'exit_status', 'exit_method', 'exit_time', 'subject_name', 'subject_code'
+]
 
 class AttendanceAlertSerializer(serializers.ModelSerializer):
     class Meta:

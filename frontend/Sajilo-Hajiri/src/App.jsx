@@ -1,3 +1,4 @@
+import TeacherAttendanceSession from './components/TeacherAttendanceSession';
 // App.jsx
 import React, { useState, useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
@@ -12,6 +13,7 @@ import Dashboard from "./components/Dashboard";
 import StudentHistoryModal from "./components/Dashboard/StudentHistoryModal";
 import Footer from "./components/Footer/Footer";
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 import "./App.css"
 import { authFetch } from "./Helper/Csrf_token";
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
@@ -170,6 +172,9 @@ export default function App() {
         <Route path="/not-authorized" element={<NotAuthorized />} />
         <Route path="/forgot-password" element={<ForgotPasswordForm />} />
         <Route path="/reset-password/:uidb64/:token" element={<PasswordResetForm />} />
+
+        {/* Demo route for teacher attendance session */}
+        <Route path="/teacher/attendance-session" element={<TeacherAttendanceSession classSubjectId={1} sessionTitle={"Physics - July 30"} />} />
       </Routes>
 
       <Footer />
