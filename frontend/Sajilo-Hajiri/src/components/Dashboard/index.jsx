@@ -7,12 +7,16 @@ import Register from "../Register";
 import StudentRecords from '../StudentRecords';
 
 export default function Dashboard({ user }) {
+  // All hooks must be declared at the top level, never inside conditionals
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeSession, setActiveSession] = useState(null); // For teacher attendance session
-  // Move student attendance pagination hooks to top level
   const [currentPage, setCurrentPage] = useState(1);
+  const [filterSubject, setFilterSubject] = useState('');
+  const [filterDate, setFilterDate] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [searchText, setSearchText] = useState('');
   const PAGE_SIZE = 10;
   const navigate = useNavigate();
 
@@ -160,9 +164,9 @@ export default function Dashboard({ user }) {
     );
   }
 
-  // Always declare hooks at the top, not inside conditionals
   // Prepare student dashboard variables
   let student = null, summaryBySubject = {}, sortedSubjects = [], totalPages = 1, startIdx = 0, endIdx = 0, pagedAttendance = [];
+
   if (user && user.role === "student" && data && data.student_data) {
     student = data.student_data;
     // Attendance summary by subject
@@ -182,15 +186,41 @@ export default function Dashboard({ user }) {
     };
     summaryBySubject = getAttendanceSummaryBySubject(student.attendance || []);
     sortedSubjects = Object.keys(summaryBySubject).sort();
-    totalPages = Math.ceil((student.attendance?.length || 0) / PAGE_SIZE) || 1;
+
+    // Filtering logic
+    let filteredAttendance = (student.attendance || []).filter(record => {
+      let match = true;
+      if (filterSubject && record.subject !== filterSubject) match = false;
+      if (filterDate && record.date !== filterDate) match = false;
+      if (filterStatus && record.entry_status !== filterStatus && record.exit_status !== filterStatus) match = false;
+      if (searchText && !(
+        (record.subject && record.subject.toLowerCase().includes(searchText.toLowerCase())) ||
+        (record.entry_status && record.entry_status.toLowerCase().includes(searchText.toLowerCase())) ||
+        (record.exit_status && record.exit_status.toLowerCase().includes(searchText.toLowerCase())) ||
+        (record.date && record.date.includes(searchText))
+      )) match = false;
+      return match;
+    });
+
+    totalPages = Math.ceil(filteredAttendance.length / PAGE_SIZE) || 1;
     startIdx = (currentPage - 1) * PAGE_SIZE;
     endIdx = startIdx + PAGE_SIZE;
-    pagedAttendance = (student.attendance || []).slice(startIdx, endIdx);
+    pagedAttendance = filteredAttendance.slice(startIdx, endIdx);
   }
   if (user.role === "student") {
     if (!student) {
       return <div className="main-content container  alert alert-warning">⚠️ You are not enrolled in any class yet.</div>;
     }
+    // Subject options for filter dropdown
+    const subjectOptions = student.subjects?.map(subj => ({ value: subj.name, label: `${subj.name} (${subj.code})` })) || [];
+    // Status options for filter dropdown
+    const statusOptions = [
+      { value: '', label: 'All' },
+      { value: 'present', label: 'Present' },
+      { value: 'absent', label: 'Absent' },
+      { value: 'manual-present', label: 'Manual Present' },
+      { value: 'manual-exit', label: 'Manual Exit' },
+    ];
     return (
       <div className="main-content container ">
         <h2 className="mb-4">Welcome, {user.name || user.username} 👨‍🎓</h2>
@@ -242,13 +272,41 @@ export default function Dashboard({ user }) {
             )}
           </div>
         </div>
+        <div className="card shadow-sm mb-4">
+          <div className="card-body">
+            <h5 className="card-title">🔍 Filter & Search Attendance Records:</h5>
+            <div className="row mb-3">
+              <div className="col-md-4 mb-2">
+                <select className="form-select" value={filterSubject} onChange={e => setFilterSubject(e.target.value)}>
+                  <option value="">All Subjects</option>
+                  {subjectOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-4 mb-2">
+                <input type="date" className="form-control" value={filterDate} onChange={e => setFilterDate(e.target.value)} />
+              </div>
+              <div className="col-md-4 mb-2">
+                <select className="form-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+                  {statusOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-12 mb-2">
+                <input type="text" className="form-control" placeholder="Search by subject, status, date..." value={searchText} onChange={e => setSearchText(e.target.value)} />
+              </div>
+            </div>
+          </div>
+        </div>
         <div className="card shadow-sm">
           <div className="card-body">
-            <h5 className="card-title">📝 Recent Attendance Records:</h5>
-            {(student.attendance?.length > 0) ? (
-              <div style={{ maxHeight: 300, overflowY: 'auto' }}>
-                <table className="table table-sm">
-                  <thead>
+            <h5 className="card-title">📝 Attendance Records:</h5>
+            {(pagedAttendance.length > 0) ? (
+              <div style={{ maxHeight: 350, overflowY: 'auto' }}>
+                <table className="table table-sm table-bordered align-middle">
+                  <thead className="table-light" style={{ position: 'sticky', top: 0, zIndex: 2 }}>
                     <tr>
                       <th>Date</th>
                       <th>Subject</th>
@@ -261,8 +319,12 @@ export default function Dashboard({ user }) {
                       <tr key={record.id}>
                         <td>{record.date}</td>
                         <td>{record.subject}</td>
-                        <td>{record.entry_status}</td>
-                        <td>{record.exit_status}</td>
+                        <td>
+                          <span className={`badge bg-${record.entry_status === 'present' ? 'success' : record.entry_status === 'manual-present' ? 'info' : 'danger'}`}>{record.entry_status}</span>
+                        </td>
+                        <td>
+                          <span className={`badge bg-${record.exit_status === 'present' ? 'success' : record.exit_status === 'manual-exit' ? 'info' : 'danger'}`}>{record.exit_status}</span>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
