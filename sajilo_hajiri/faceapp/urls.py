@@ -3,6 +3,7 @@ from .views import *
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
+    path('attendance/session/open/', GetOpenAttendanceSessionView.as_view(), name='get-open-attendance-session'),
     path('register/', RegisterUserView.as_view(), name='register'),
     path('update-info/', UpdatePendingUserInfoView.as_view(), name='update_user_info'),
     path('login/', LoginView.as_view(), name='login'),
@@ -18,6 +19,9 @@ urlpatterns = [
     path('csrf/', CSRFTokenView.as_view(), name='csrf'),
     path('attendance/student/', StudentAttendanceView.as_view(), name='student-attendance'),
     path('verify-token/', VerifyTokenView.as_view(), name='verify-reset-token'),
+    path('attendance/session/create/', CreateAttendanceSessionView.as_view(), name='create-attendance-session'),
+    path('attendance/recognize/', AttendanceFaceRecognitionView.as_view(), name='attendance-face-recognition'),
+    path('attendance/manual/', ManualAttendanceView.as_view(), name='manual-attendance'),
     path('set-password/', SetNewPasswordView.as_view(), name='set-new-password'),
     path('admin/create-class/', CreateClassView.as_view(), name='create-class'),
     path('admin/create-subject/', CreateSubjectView.as_view(), name='create-subject'),
@@ -29,6 +33,9 @@ urlpatterns = [
     path('subjects/<int:pk>/', SubjectDetailView.as_view(), name='subject-detail'),
     path('teachers/', ListTeachers.as_view(), name='list-teachers'),
     path('students/', ListStudents.as_view(), name='list-students'),
+    # Student records endpoints
+    path('teacher/student-records/', TeacherStudentRecordsView.as_view(), name='teacher-student-records'),
+    path('admin/student-records/', AdminStudentRecordsView.as_view(), name='admin-student-records'),
     # Class URLs
     path('classes/<int:pk>/', ClassDetailView.as_view(), name='class-detail'),
     
