@@ -190,11 +190,11 @@ export default function Dashboard({ user }) {
     // Filtering logic
     let filteredAttendance = (student.attendance || []).filter(record => {
       let match = true;
-      if (filterSubject && record.subject !== filterSubject) match = false;
+      if (filterSubject && record.subject_name !== filterSubject) match = false;
       if (filterDate && record.date !== filterDate) match = false;
       if (filterStatus && record.entry_status !== filterStatus && record.exit_status !== filterStatus) match = false;
       if (searchText && !(
-        (record.subject && record.subject.toLowerCase().includes(searchText.toLowerCase())) ||
+        (record.subject_name && record.subject_name.toLowerCase().includes(searchText.toLowerCase())) ||
         (record.entry_status && record.entry_status.toLowerCase().includes(searchText.toLowerCase())) ||
         (record.exit_status && record.exit_status.toLowerCase().includes(searchText.toLowerCase())) ||
         (record.date && record.date.includes(searchText))
@@ -318,7 +318,7 @@ export default function Dashboard({ user }) {
                     {pagedAttendance.map((record) => (
                       <tr key={record.id}>
                         <td>{record.date}</td>
-                        <td>{record.subject}</td>
+                        <td>{record.subject_name}</td>
                         <td>
                           <span className={`badge bg-${record.entry_status === 'present' ? 'success' : record.entry_status === 'manual-present' ? 'info' : 'danger'}`}>{record.entry_status}</span>
                         </td>
