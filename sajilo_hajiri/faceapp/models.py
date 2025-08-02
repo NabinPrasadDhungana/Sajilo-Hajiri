@@ -3,6 +3,14 @@ from django.contrib.auth.models import AbstractUser
 
 # Custom User model
 class User(AbstractUser):
+    @property
+    def avatar_url(self):
+        if self.avatar:
+            try:
+                return self.avatar.url
+            except Exception:
+                return None
+        return None
     ROLE_CHOICES = [
         ('admin', 'Admin'),
         ('teacher', 'Teacher'),

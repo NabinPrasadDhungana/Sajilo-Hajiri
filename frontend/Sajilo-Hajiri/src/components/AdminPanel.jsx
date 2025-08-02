@@ -34,6 +34,8 @@ export default function AdminPanel({ user }) {
     student: null
   });
 
+  const [viewUser, setViewUser] = useState(null);
+  // Modal state for viewing user details
   const [formData, setFormData] = useState({
     // Class form
     className: '', year: '', semester: '', department: '',
@@ -1083,31 +1085,36 @@ export default function AdminPanel({ user }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredUsers.map(user => (
-
-                      <tr key={user.id}>
-                        <td>{user.roll_number}</td>
-                        <td>{user.name}</td>
-                        <td>{user.email}</td>
+                    {filteredUsers.map(u => (
+                      <tr key={u.id}>
+                        <td>{u.roll_number}</td>
+                        <td>{u.name}</td>
+                        <td>{u.email}</td>
                         <td>
-                          <span className={`badge ${user.role === 'teacher' ? 'bg-info' :
-                            user.role === 'admin' ? 'bg-danger' : 'bg-primary'
+                          <span className={`badge ${u.role === 'teacher' ? 'bg-info' :
+                            u.role === 'admin' ? 'bg-danger' : 'bg-primary'
                             }`}>
-                            {user.role}
+                            {u.role}
                           </span>
                         </td>
                         <td>
-                          <span className={`badge ${user.approval_status === 'approved' ? 'bg-success' :
-                            user.approval_status === 'unapproved' ? 'bg-danger' : 'bg-warning'
+                          <span className={`badge ${u.approval_status === 'approved' ? 'bg-success' :
+                            u.approval_status === 'unapproved' ? 'bg-danger' : 'bg-warning'
                             }`}>
-                            {user.approval_status || 'pending'}
+                            {u.approval_status || 'pending'}
                           </span>
                         </td>
                         <td>
                           <div className="d-flex gap-2">
                             <button
+                              className="btn btn-sm btn-info"
+                              onClick={() => setViewUser(u)}
+                            >
+                              View
+                            </button>
+                            <button
                               className="btn btn-sm btn-primary"
-                              onClick={() => editUser(user)}
+                              onClick={() => editUser(u)}
                             >
                               Edit
                             </button>
@@ -1115,43 +1122,105 @@ export default function AdminPanel({ user }) {
                               className="btn btn-sm btn-danger"
                               onClick={() => {
                                 if (window.confirm('Are you sure you want to delete this user?')) {
-                                  deleteUser(user.id);
+                                  deleteUser(u.id);
                                 }
                               }}
-                              disabled={user.id === user?.id} // Only if currentUser is available
+                              disabled={u.id === user?.id}
                             >
                               Delete
                             </button>
-
-                            {user.approval_status !== 'approved' && (
+                            {u.approval_status !== 'approved' && (
                               <button
                                 className="btn btn-sm btn-success"
-                                onClick={() => handleUserAction(user.email, 'approve')}
+                                onClick={() => handleUserAction(u.email, 'approve')}
                               >
                                 Approve
                               </button>
                             )}
-                            {user.approval_status !== 'unapproved' && (
+                            {u.approval_status !== 'unapproved' && (
                               <button
                                 className="btn btn-sm btn-warning"
-                                onClick={() => handleUserAction(user.email, 'unapprove')}
+                                onClick={() => handleUserAction(u.email, 'unapprove')}
                               >
                                 Unapprove
                               </button>
                             )}
                             <button
-                              className={`btn btn-sm ${selectedEmail === user.email ? 'btn-secondary' : 'btn-info'
-                                }`}
+                              className={`btn btn-sm ${selectedEmail === u.email ? 'btn-secondary' : 'btn-info'}`}
                               onClick={() => setSelectedEmail(
-                                selectedEmail === user.email ? null : user.email
+                                selectedEmail === u.email ? null : u.email
                               )}
                             >
-                              {selectedEmail === user.email ? 'Cancel' : 'Feedback'}
+                              {selectedEmail === u.email ? 'Cancel' : 'Feedback'}
                             </button>
                           </div>
                         </td>
                       </tr>
                     ))}
+      {/* User Details Modal */}
+      {viewUser && (
+        <div className="modal fade show" style={{ display: 'block', background: 'rgba(0,0,0,0.5)' }} tabIndex="-1">
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">User Details</h5>
+                <button type="button" className="btn-close" onClick={() => setViewUser(null)}></button>
+              </div>
+              <div className="modal-body">
+                <div className="text-center mb-3">
+                  <img
+                    src={
+                      viewUser.avatar
+                        ? (viewUser.avatar.startsWith('http') ? viewUser.avatar : `/media/avatars/${viewUser.avatar}`)
+                        : (viewUser.avatar_url
+                            ? (viewUser.avatar_url.startsWith('http') ? viewUser.avatar_url : `/media/avatars/${viewUser.avatar_url}`)
+                            : '/media/avatars/Logo.png')
+                    }
+                    alt="User Avatar"
+                    className="rounded-circle border"
+                    style={{ width: 100, height: 100, objectFit: 'cover', background: '#f0f0f0' }}
+                  />
+                </div>
+                <dl className="row">
+                  <dt className="col-sm-4">Name</dt>
+                  <dd className="col-sm-8">{viewUser.name}</dd>
+                  <dt className="col-sm-4">Email</dt>
+                  <dd className="col-sm-8">{viewUser.email}</dd>
+                  {viewUser.roll_number && <>
+                    <dt className="col-sm-4">Roll Number</dt>
+                    <dd className="col-sm-8">{viewUser.roll_number}</dd>
+                  </>}
+                  {viewUser.department && <>
+                    <dt className="col-sm-4">Department</dt>
+                    <dd className="col-sm-8">{viewUser.department}</dd>
+                  </>}
+                  {viewUser.semester && <>
+                    <dt className="col-sm-4">Semester</dt>
+                    <dd className="col-sm-8">{viewUser.semester}</dd>
+                  </>}
+                  {viewUser.section && <>
+                    <dt className="col-sm-4">Section</dt>
+                    <dd className="col-sm-8">{viewUser.section}</dd>
+                  </>}
+                  <dt className="col-sm-4">Role</dt>
+                  <dd className="col-sm-8">{viewUser.role}</dd>
+                  <dt className="col-sm-4">Status</dt>
+                  <dd className="col-sm-8">{viewUser.approval_status || 'pending'}</dd>
+                </dl>
+              </div>
+              <div className="modal-footer">
+                {viewUser.approval_status !== 'approved' && (
+                  <button className="btn btn-success" onClick={() => { handleUserAction(viewUser.email, 'approve'); setViewUser(null); }}>Approve</button>
+                )}
+                {viewUser.approval_status !== 'unapproved' && (
+                  <button className="btn btn-warning" onClick={() => { handleUserAction(viewUser.email, 'unapprove'); setViewUser(null); }}>Unapprove</button>
+                )}
+                <button className="btn btn-secondary" onClick={() => setViewUser(null)}>Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
                   </tbody>
                 </table>
               </div>
