@@ -5,6 +5,7 @@ import AdminPanel from "../AdminPanel";
 import { authFetch } from "../../Helper/Csrf_token";
 import Register from "../Register";
 import StudentRecords from '../StudentRecords';
+import { CSVLink } from "react-csv";
 
 export default function Dashboard({ user }) {
   // All hooks must be declared at the top level, never inside conditionals
@@ -304,6 +305,20 @@ export default function Dashboard({ user }) {
         <div className="card shadow-sm">
           <div className="card-body">
             <h5 className="card-title">📝 Attendance Records:</h5>
+             {pagedAttendance.length > 0 && (
+    <CSVLink
+      data={pagedAttendance.map(rec => ({
+        Date: rec.date,
+        Subject: rec.subject_name,
+        "Entry Status": rec.entry_status,
+        "Exit Status": rec.exit_status
+      }))}
+      filename={`attendance-${user.username || user.name}.csv`}
+      className="btn btn-outline-success btn-sm"
+    >
+      ⬇️ Download CSV
+    </CSVLink>
+  )}
             {(pagedAttendance.length > 0) ? (
               <div style={{ maxHeight: 350, overflowY: 'auto' }}>
                 <table className="table table-sm table-bordered align-middle">

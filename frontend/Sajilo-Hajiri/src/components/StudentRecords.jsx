@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import CSVExporter from './Dashboard/Csvexpoter';
 
 const PAGE_SIZE = 10;
 
@@ -114,7 +115,10 @@ function StudentRecords({ apiUrl, filtersConfig = [], title = 'Student Records' 
           />
         </div>
       </div>
+
+       <CSVExporter records={filteredRecords} filename="student_attendance.csv" />
       <div className="table-responsive">
+       
         <table className="table table-bordered">
           <thead>
             <tr>
