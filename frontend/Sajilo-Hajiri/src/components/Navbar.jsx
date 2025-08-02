@@ -29,6 +29,15 @@ const Navbar = ({ currentUser, handleLogout, notifications }) => {
               </NavLink>
             </li>
 
+            {/* Dashboard link for any logged-in user */}
+            {currentUser && (
+              <li className="nav-item">
+                <NavLink to="/dashboard" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
+                  Dashboard
+                </NavLink>
+              </li>
+            )}
+
             {!currentUser ? (
               <>
                 <li className="nav-item">
