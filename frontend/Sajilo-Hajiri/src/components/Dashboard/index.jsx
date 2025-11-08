@@ -247,7 +247,7 @@ export default function Dashboard({ user }) {
             )}
           </div>
         </div>
-        <div className="card shadow-sm mb-4">
+        <div className="card shadow-sm mb-4" id="records">
           <div className="card-body">
             <h5 className="card-title">📝 Attendance Summary by Subject:</h5>
             {sortedSubjects.length === 0 ? (
@@ -387,7 +387,7 @@ export default function Dashboard({ user }) {
     ];
 
     return (
-      <div className="main-content container ">
+      <div className="main-content container " id="attendance">
         <h2 className="mb-4">Welcome, {user.name || user.username} 👨‍🏫</h2>
         {teacher.teaching.map((assignment, index) => (
           <div className="card mb-4 shadow-sm" key={index}>
@@ -439,7 +439,7 @@ export default function Dashboard({ user }) {
             </div>
           </div>
         ))}
-        <div className="card my-4">
+        <div className="card my-4" id="records">
           <div className="card-header bg-info text-white">
             <h5 className="mb-0">Student Records for Your Subjects</h5>
           </div>
