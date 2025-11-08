@@ -8,9 +8,18 @@ from .models import (
 # Model Serializers
 
 class UserSerializer(serializers.ModelSerializer):
+    avatar_url = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = [ 'username', 'email', 'name', 'role', 'roll_number', 'avatar', 'approval_status', 'feedback']
+        fields = [ 'username', 'email', 'name', 'role', 'roll_number', 'avatar', 'avatar_url', 'approval_status', 'feedback']
+
+    def get_avatar_url(self, obj):
+        request = self.context.get('request', None)
+        url = obj.avatar_url
+        if url and request is not None:
+            return request.build_absolute_uri(url)
+        return url
 
 class ClassSerializer(serializers.ModelSerializer):
     class Meta:
