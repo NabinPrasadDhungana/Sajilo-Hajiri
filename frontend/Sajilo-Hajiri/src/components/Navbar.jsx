@@ -4,6 +4,28 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom";
 // Note: This version uses Bootstrap 5 classes and custom CSS to match the image design.
 // It includes a spacer element to prevent content from hiding behind the fixed navbar.
 
+// Logo Component
+const Logo = ({ height = 32, className = "" }) => {
+  return (
+    <svg 
+      width={height * 1.5} 
+      height={height} 
+      viewBox="0 0 48 48" 
+      fill="none" 
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+    >
+      {/* Face Icon in Circle */}
+      <circle cx="24" cy="24" r="22" fill="#ff6600" opacity="0.1"/>
+      <circle cx="24" cy="24" r="18" fill="#ff6600" opacity="0.15"/>
+      <circle cx="24" cy="20" r="7" fill="none" stroke="#ff6600" strokeWidth="2.5"/>
+      <path d="M14 30 Q20 36 24 36 Q28 36 34 30" stroke="#ff6600" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+      <circle cx="20" cy="19" r="2" fill="#ff6600"/>
+      <circle cx="28" cy="19" r="2" fill="#ff6600"/>
+    </svg>
+  );
+};
+
 const Navbar = ({ currentUser, handleLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -13,6 +35,7 @@ const Navbar = ({ currentUser, handleLogout }) => {
     return null;
   }
   // --------------------------------------------------------
+  
 
   const handleAvatarClick = () => {
     // Uses switch case for navigation based on role
@@ -54,34 +77,61 @@ const Navbar = ({ currentUser, handleLogout }) => {
       // For Teacher/Student roles, use the current path + hash fragment (e.g., /dashboard#records)
       return `${location.pathname}#${cleanItem}`;
     } else {
-      // For Marketing/Admin roles, use standard path (e.g., /product)
-      return `/${cleanItem}`;
+      // For Marketing/Admin roles, use hash fragment to scroll to section on home page
+      return `/#${cleanItem}`;
     }
   };
   
-  // Custom click handler for dashboard links to trigger scroll
-  const handleDashboardLinkClick = (e, item) => {
-    // Only handle click if it's a dashboard link (internal scroll)
-    if (isDashboardLinks) {
-        const cleanItem = item.toLowerCase().replace(/\s/g, '');
+  // Custom click handler for both dashboard and marketing links to trigger scroll
+  const handleNavLinkClick = (e, item) => {
+    const cleanItem = item.toLowerCase().replace(/\s/g, '');
+    
+    // Check if we're on the home page or need to navigate to it
+    if (location.pathname === '/' || location.pathname === '') {
+      // We're on home page, scroll to section
+      const targetElement = document.getElementById(cleanItem);
+      
+      if (targetElement) {
+        e.preventDefault();
+        const navbarHeight = 96;
+        const targetPosition = targetElement.getBoundingClientRect().top + window.scrollY - navbarHeight;
+        
+        window.scrollTo({
+          top: targetPosition,
+          behavior: 'smooth'
+        });
+        window.history.pushState(null, null, `#${cleanItem}`);
+      }
+    } else if (!isDashboardLinks) {
+      // We're not on home page, navigate to home first then scroll
+      e.preventDefault();
+      navigate('/');
+      // Wait for navigation then scroll
+      setTimeout(() => {
         const targetElement = document.getElementById(cleanItem);
-
         if (targetElement) {
-            e.preventDefault(); // Prevent default NavLink behavior
-
-            // Calculate target position considering the fixed navbar height (96px)
-            const navbarHeight = 96;
-            const targetPosition = targetElement.getBoundingClientRect().top + window.scrollY - navbarHeight;
-
-            window.scrollTo({
-                top: targetPosition,
-                behavior: 'smooth'
-            });
-            // Optionally update URL hash without refreshing the page
-            window.history.pushState(null, null, `#${cleanItem}`);
+          const navbarHeight = 96;
+          const targetPosition = targetElement.getBoundingClientRect().top + window.scrollY - navbarHeight;
+          window.scrollTo({
+            top: targetPosition,
+            behavior: 'smooth'
+          });
         }
+      }, 100);
+    } else if (isDashboardLinks) {
+      // Dashboard links - handle scroll on current page
+      const targetElement = document.getElementById(cleanItem);
+      if (targetElement) {
+        e.preventDefault();
+        const navbarHeight = 96;
+        const targetPosition = targetElement.getBoundingClientRect().top + window.scrollY - navbarHeight;
+        window.scrollTo({
+          top: targetPosition,
+          behavior: 'smooth'
+        });
+        window.history.pushState(null, null, `#${cleanItem}`);
+      }
     }
-    // If it's a marketing link, NavLink handles standard routing
   };
 
 
@@ -96,14 +146,9 @@ const Navbar = ({ currentUser, handleLogout }) => {
 
           {/* === LEFT: LOGO === */}
           <div className="d-flex align-items-center">
-            <NavLink className="navbar-brand fw-extrabold fs-5 d-flex align-items-center text-dark" to="/">
-              <img
-                src="/logo-orange.png" // replace with your actual logo path
-                alt="Sajilo Hajiri Logo"
-                height="28"
-                className="me-2"
-              />
-              Sajilo Hajiri
+            <NavLink className="navbar-brand fw-extrabold fs-5 d-flex align-items-center text-dark text-decoration-none" to="/">
+              <Logo height={28} className="me-2" />
+              <span>Sajilo Hajiri</span>
             </NavLink>
           </div>
 
@@ -121,7 +166,7 @@ const Navbar = ({ currentUser, handleLogout }) => {
                       // Removed 'text-sm' since font-size is set in CSS
                       className="nav-link fw-semibold" 
                       to={getNavLinkTarget(item)} // Use helper function to get target
-                      onClick={isDashboardLinks ? (e) => handleDashboardLinkClick(e, item) : undefined} // Add custom click handler
+                      onClick={(e) => handleNavLinkClick(e, item)} // Add custom click handler for all links
                   >
                       {item}
                   </NavLink>
@@ -211,23 +256,97 @@ const Navbar = ({ currentUser, handleLogout }) => {
             width: 100%;
         }
 
-        .navbar-brand, .nav-link, .navbar-link-custom {
-          color: #4a5568 !important; /* Tailwind gray-700 equivalent (Base Text Color) */
-          transition: color 0.15s ease-in-out;
-          font-size: 0.875rem !important; /* text-sm equivalent */
-        }
-        
-        /* FIX: Force the base color on all pseudo-states to prevent Bootstrap defaults from overriding */
-        .nav-link:link, 
-        .nav-link:visited, 
-        .nav-link.active,
-        .nav-link:focus { 
-          color: #4a5568 !important; 
+        .navbar-brand, .navbar-link-custom {
+          color: #4a5568 !important;
+          transition: color 0.3s ease-in-out;
+          font-size: 0.875rem !important;
         }
 
-        /* Hover state (This remains the orange color) */
-        .navbar-brand:hover, 
-        .nav-link:hover, 
+        /* Nav link with sliding blue line effect - ALL STATES - MAXIMUM SPECIFICITY */
+        nav.navbar .navbar-nav .nav-item .nav-link,
+        nav.navbar .navbar-nav .nav-item .nav-link:link,
+        nav.navbar .navbar-nav .nav-item .nav-link:visited,
+        nav.navbar .navbar-nav .nav-item .nav-link:focus,
+        nav.navbar .navbar-nav .nav-link,
+        nav.navbar .nav-link,
+        nav.navbar .nav-link:link,
+        nav.navbar .nav-link:visited,
+        nav.navbar .nav-link:focus {
+          position: relative !important;
+          display: inline-block !important;
+          color: #4a5568 !important;
+          font-size: 0.875rem !important;
+          text-decoration: none !important;
+          transition: color 0.3s ease-in-out !important;
+          background: transparent !important;
+          border: none !important;
+        }
+
+        /* Blue line under nav links - MAXIMUM SPECIFICITY */
+        nav.navbar .navbar-nav .nav-item .nav-link::after,
+        nav.navbar .navbar-nav .nav-link::after,
+        nav.navbar .nav-link::after {
+          content: '' !important;
+          position: absolute !important;
+          bottom: 0 !important;
+          left: 0 !important;
+          width: 0 !important;
+          height: 2px !important;
+          background-color: #007bff !important;
+          transition: width 0.3s ease-in-out !important;
+          z-index: 1 !important;
+        }
+
+        /* Hover state - orange color and blue line slides - MAXIMUM SPECIFICITY */
+        nav.navbar .navbar-nav .nav-item .nav-link:hover,
+        nav.navbar .navbar-nav .nav-link:hover,
+        nav.navbar .nav-link:hover,
+        .navbar .navbar-nav .nav-item .nav-link:hover {
+          color: #ff6600 !important;
+          text-decoration: none !important;
+          background: transparent !important;
+          border: none !important;
+        }
+
+        nav.navbar .navbar-nav .nav-item .nav-link:hover::after,
+        nav.navbar .navbar-nav .nav-link:hover::after,
+        nav.navbar .nav-link:hover::after,
+        .navbar .navbar-nav .nav-item .nav-link:hover::after {
+          width: 100% !important;
+        }
+
+        /* Active state - keep normal (gray) but allow hover to override */
+        nav.navbar .navbar-nav .nav-item .nav-link.active,
+        nav.navbar .navbar-nav .nav-link.active,
+        nav.navbar .nav-link.active {
+          color: #4a5568 !important;
+          background: transparent !important;
+        }
+
+        nav.navbar .navbar-nav .nav-item .nav-link.active::after,
+        nav.navbar .navbar-nav .nav-link.active::after,
+        nav.navbar .nav-link.active::after {
+          width: 0 !important;
+        }
+
+        /* Ensure hover overrides active state */
+        nav.navbar .navbar-nav .nav-item .nav-link.active:hover,
+        nav.navbar .navbar-nav .nav-link.active:hover,
+        nav.navbar .nav-link.active:hover {
+          color: #ff6600 !important;
+        }
+
+        nav.navbar .navbar-nav .nav-item .nav-link.active:hover::after,
+        nav.navbar .navbar-nav .nav-link.active:hover::after,
+        nav.navbar .nav-link.active:hover::after {
+          width: 100% !important;
+        }
+
+        /* Brand hover (keep orange for brand) */
+        .navbar-brand:hover {
+          color: var(--jibble-orange) !important;
+        }
+
         .navbar-link-custom:hover {
           color: var(--jibble-orange) !important;
         }

@@ -1,0 +1,849 @@
+/* ============================================
+   Home Page - Modern & Cool Styling
+   ============================================ */
+
+:root {
+  --primary-orange: #ff6600;
+  --primary-orange-dark: #e65c00;
+  --primary-orange-light: #ff8533;
+  --gradient-orange: linear-gradient(135deg, #ff6600 0%, #ff8533 100%);
+  --gradient-orange-reverse: linear-gradient(135deg, #ff8533 0%, #ff6600 100%);
+  --gradient-purple: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-blue: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
+  --shadow-orange: 0 8px 24px rgba(255, 102, 0, 0.25);
+}
+
+/* ============================================
+   Hero Section
+   ============================================ */
+
+.hero-section {
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 50%, #fff5f0 100%);
+  position: relative;
+  overflow: hidden;
+  padding: 40px 0 80px;
+  margin-top: 0;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(255, 102, 0, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: float 6s ease-in-out infinite;
+}
+
+.hero-section::after {
+  content: '';
+  position: absolute;
+  bottom: -30%;
+  left: -5%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(255, 102, 0, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: float 8s ease-in-out infinite reverse;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(5deg);
+  }
+}
+
+.hero-section h1 {
+  font-size: 3.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+  background: linear-gradient(135deg, #1a202c 0%, #4a5568 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1.5rem;
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.hero-section h1 .text-primary {
+  background: var(--gradient-orange);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-section .lead {
+  font-size: 1.25rem;
+  color: #64748b;
+  line-height: 1.8;
+  animation: fadeInUp 0.8s ease-out 0.2s both;
+}
+
+.hero-icon-container {
+  background: var(--gradient-orange);
+  box-shadow: var(--shadow-orange);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: fadeInUp 0.8s ease-out 0.4s both;
+}
+
+.hero-icon-container::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+
+.hero-icon-container:hover {
+  transform: translateY(-10px) scale(1.05);
+  box-shadow: 0 12px 40px rgba(255, 102, 0, 0.35);
+}
+
+.hero-icon-container svg {
+  position: relative;
+  z-index: 1;
+  color: white !important;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   Buttons
+   ============================================ */
+
+.btn-primary {
+  background: var(--gradient-orange);
+  border: none;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-primary:hover::before {
+  left: 100%;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-orange);
+  background: var(--gradient-orange-reverse);
+}
+
+.btn-outline-primary {
+  border: 2px solid var(--primary-orange);
+  color: var(--primary-orange);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  background: transparent;
+}
+
+.btn-outline-primary:hover {
+  background: var(--gradient-orange);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-orange);
+  border-color: var(--primary-orange);
+}
+
+/* ============================================
+   Features Section
+   ============================================ */
+
+#features {
+  background: linear-gradient(to bottom, #ffffff 0%, #f8f9fa 100%);
+  position: relative;
+}
+
+.feature-card {
+  background: white;
+  border: 1px solid rgba(255, 102, 0, 0.1);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--gradient-orange);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s ease;
+}
+
+.feature-card:hover::before {
+  transform: scaleX(1);
+}
+
+.feature-card:hover {
+  transform: translateY(-10px);
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(255, 102, 0, 0.3);
+}
+
+.icon-container {
+  background: linear-gradient(135deg, rgba(255, 102, 0, 0.1) 0%, rgba(255, 102, 0, 0.2) 100%);
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feature-card:hover .icon-container {
+  background: var(--gradient-orange);
+  transform: scale(1.1) rotate(5deg);
+}
+
+.feature-card:hover .icon-container svg {
+  color: white !important;
+  transform: scale(1.1);
+}
+
+.feature-card h4 {
+  color: #1a202c;
+  font-weight: 700;
+  transition: color 0.3s ease;
+}
+
+.feature-card:hover h4 {
+  color: var(--primary-orange);
+}
+
+/* ============================================
+   Step Cards (How It Works)
+   ============================================ */
+
+.step-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border: 2px solid transparent;
+  transition: all 0.4s ease;
+  position: relative;
+}
+
+.step-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  padding: 2px;
+  background: var(--gradient-orange);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.step-card:hover::after {
+  opacity: 1;
+}
+
+.step-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-lg);
+  background: white;
+}
+
+.step-number {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  background: var(--gradient-orange);
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.step-card:hover .step-number {
+  transform: scale(1.15) rotate(360deg);
+  box-shadow: var(--shadow-orange);
+}
+
+.step-card h4 {
+  color: #1a202c;
+  font-weight: 700;
+  transition: color 0.3s ease;
+}
+
+.step-card:hover h4 {
+  color: var(--primary-orange);
+}
+
+/* ============================================
+   Testimonials
+   ============================================ */
+
+.testimonial-card {
+  background: white;
+  border-left: 4px solid transparent;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.testimonial-card::before {
+  content: '"';
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-size: 4rem;
+  color: rgba(255, 102, 0, 0.1);
+  font-family: Georgia, serif;
+  line-height: 1;
+  transition: all 0.3s ease;
+}
+
+.testimonial-card:hover::before {
+  color: rgba(255, 102, 0, 0.2);
+  transform: scale(1.2);
+}
+
+.testimonial-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+  border-left-color: var(--primary-orange);
+}
+
+.testimonial-card .avatar {
+  background: var(--gradient-orange);
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+}
+
+.testimonial-card:hover .avatar {
+  transform: scale(1.1);
+  box-shadow: var(--shadow-md);
+}
+
+/* ============================================
+   CTA Section
+   ============================================ */
+
+section.bg-primary {
+  background: var(--gradient-orange) !important;
+  position: relative;
+  overflow: hidden;
+  padding: 100px 0 !important;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+}
+
+section.bg-primary .container {
+  position: relative;
+  z-index: 2;
+}
+
+section.bg-primary h2,
+section.bg-primary p,
+section.bg-primary .lead {
+  color: white !important;
+  position: relative;
+  z-index: 2;
+}
+
+section.bg-primary h2.display-5 {
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  -webkit-text-fill-color: white !important;
+  background-clip: unset !important;
+  color: white !important;
+}
+
+section.bg-primary::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: pulse 4s ease-in-out infinite;
+}
+
+section.bg-primary::after {
+  content: '';
+  position: absolute;
+  bottom: -30%;
+  left: -5%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: pulse 5s ease-in-out infinite reverse;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+section.bg-primary .btn-light {
+  background: white;
+  color: var(--primary-orange);
+  font-weight: 600;
+  border: none;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-md);
+}
+
+section.bg-primary .btn-light:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  background: #f8f9fa;
+}
+
+section.bg-primary .btn-outline-light {
+  border: 2px solid white;
+  color: white;
+  font-weight: 600;
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+section.bg-primary .btn-outline-light:hover {
+  background: white;
+  color: var(--primary-orange);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ============================================
+   Section Headings
+   ============================================ */
+
+section h2.display-5 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #1a202c 0%, #4a5568 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1rem;
+}
+
+section p.text-muted {
+  color: #64748b;
+  font-size: 1.1rem;
+  line-height: 1.7;
+}
+
+/* ============================================
+   List Items
+   ============================================ */
+
+.list-unstyled li {
+  transition: all 0.3s ease;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+}
+
+.list-unstyled li:hover {
+  background: rgba(255, 102, 0, 0.05);
+  transform: translateX(5px);
+}
+
+.list-unstyled li svg {
+  transition: transform 0.3s ease;
+}
+
+.list-unstyled li:hover svg {
+  transform: scale(1.2) rotate(5deg);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 768px) {
+  .hero-section h1 {
+    font-size: 2.5rem;
+  }
+  
+  .hero-section .lead {
+    font-size: 1.1rem;
+  }
+  
+  section h2.display-5 {
+    font-size: 2rem;
+  }
+  
+  .hero-icon-container {
+    margin-top: 2rem;
+  }
+}
+
+/* ============================================
+   Smooth Scrolling
+   ============================================ */
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* ============================================
+   Additional Enhancements
+   ============================================ */
+
+.bg-primary-soft {
+  background: linear-gradient(135deg, rgba(255, 102, 0, 0.1) 0%, rgba(255, 102, 0, 0.05) 100%);
+}
+
+.text-primary {
+  color: var(--primary-orange) !important;
+}
+
+/* Glassmorphism effect for cards */
+.feature-card,
+.testimonial-card,
+.step-card {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Gradient text effect */
+.gradient-text {
+  background: var(--gradient-orange);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============================================
+   Main Content & Section Spacing
+   ============================================ */
+
+.main-content {
+  overflow-x: hidden;
+  min-height: 100vh;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+.main-content section {
+  position: relative;
+  z-index: 1;
+}
+
+.main-content > section:first-child {
+  margin-top: 0 !important;
+  padding-top: 40px !important;
+}
+
+/* Ensure proper spacing between sections */
+section {
+  padding: 80px 0 !important;
+}
+
+section.py-8 {
+  padding: 80px 0 !important;
+}
+
+/* Hero section specific padding */
+.hero-section {
+  padding: 40px 0 80px !important;
+  margin-top: 0 !important;
+}
+
+/* Ensure CTA section is fully visible */
+section.bg-primary {
+  margin-bottom: 0 !important;
+  padding-bottom: 100px !important;
+}
+
+/* Fix for text visibility in CTA */
+section.bg-primary .opacity-75 {
+  opacity: 0.9 !important;
+  color: white !important;
+}
+
+/* Ensure buttons are visible and properly styled */
+section.bg-primary .btn {
+  position: relative;
+  z-index: 3;
+  margin: 0.5rem;
+}
+
+/* Additional spacing for last section */
+.main-content > section:last-child {
+  margin-bottom: 0;
+  padding-bottom: 100px !important;
+}
+
+/* ============================================
+   Product Section Styles
+   ============================================ */
+
+.product-feature-card {
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.product-feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(255, 102, 0, 0.2);
+}
+
+.product-icon-wrapper {
+  transition: all 0.3s ease;
+}
+
+.product-feature-card:hover .product-icon-wrapper {
+  background: var(--gradient-orange) !important;
+  transform: scale(1.1) rotate(5deg);
+}
+
+.product-feature-card:hover .product-icon-wrapper svg {
+  color: white !important;
+}
+
+.product-card {
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 102, 0, 0.1);
+}
+
+.product-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(255, 102, 0, 0.3);
+}
+
+.product-card svg {
+  transition: all 0.3s ease;
+}
+
+.product-card:hover svg {
+  transform: scale(1.15);
+  color: var(--primary-orange) !important;
+}
+
+/* ============================================
+   Solutions Section Styles
+   ============================================ */
+
+.solution-card {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.solution-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--gradient-orange);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s ease;
+}
+
+.solution-card:hover::before {
+  transform: scaleX(1);
+}
+
+.solution-card:hover {
+  transform: translateY(-10px);
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(255, 102, 0, 0.3);
+}
+
+.solution-icon {
+  transition: all 0.3s ease;
+}
+
+.solution-card:hover .solution-icon {
+  transform: scale(1.15) rotate(-5deg);
+}
+
+.solution-card:hover .solution-icon svg {
+  color: var(--primary-orange) !important;
+}
+
+/* ============================================
+   Integrations Section Styles
+   ============================================ */
+
+.integration-card {
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  position: relative;
+}
+
+.integration-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  padding: 2px;
+  background: var(--gradient-orange);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.integration-card:hover::after {
+  opacity: 1;
+}
+
+.integration-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+  background: white !important;
+}
+
+.integration-icon-wrapper {
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.integration-card:hover .integration-icon-wrapper {
+  transform: scale(1.2) rotate(10deg);
+}
+
+.integration-card:hover .integration-icon-wrapper svg {
+  color: var(--primary-orange) !important;
+}
+
+.integration-cta {
+  transition: all 0.3s ease;
+  border: 2px solid rgba(255, 102, 0, 0.2);
+}
+
+.integration-cta:hover {
+  border-color: rgba(255, 102, 0, 0.4);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-3px);
+}
+
+/* ============================================
+   Resources Section Styles
+   ============================================ */
+
+.resource-card {
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 102, 0, 0.1);
+}
+
+.resource-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(255, 102, 0, 0.3);
+}
+
+.resource-icon {
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.resource-card:hover .resource-icon {
+  transform: scale(1.2) rotate(-5deg);
+}
+
+.resource-card:hover .resource-icon svg {
+  color: var(--primary-orange) !important;
+}
+
+.resource-card .btn {
+  transition: all 0.3s ease;
+}
+
+.resource-card:hover .btn {
+  background: var(--gradient-orange);
+  color: white;
+  border-color: var(--primary-orange);
+  transform: scale(1.05);
+}
+
+.resource-banner {
+  background: linear-gradient(135deg, rgba(255, 102, 0, 0.05) 0%, rgba(255, 102, 0, 0.1) 100%);
+  border: 2px solid rgba(255, 102, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.resource-banner:hover {
+  border-color: rgba(255, 102, 0, 0.4);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-3px);
+}
+
+.resource-banner .btn {
+  transition: all 0.3s ease;
+}
+
+.resource-banner:hover .btn {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-orange);
+}
+

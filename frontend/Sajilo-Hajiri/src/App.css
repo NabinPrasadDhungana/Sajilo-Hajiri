@@ -74,54 +74,14 @@
 
 }
 
-.nav-link {
-  font-size: 1.05rem;
-  font-weight: 500;
-  color: #333;
-  position: relative;
-  transition: all 0.3s ease;
-  padding: 5px 10px;
-  cursor: pointer;
-}
-
-.nav-link::after {
-  content: "";
-  position: absolute;
-  width: 0%;
-  height: 2px;
-  bottom: 0;
-  left: 0;
-  background-color: #007bff;
-  transition: width 0.3s;
-}
-
-.nav-link:hover {
-  color: #007bff;
-}
-
-.nav-link:hover::after {
-  width: 100%;
-}
-
-.nav-link.active {
-  color: #007bff;
-  font-weight: 600;
-}
-
-.nav-link.active::after {
-  width: 100%;
-}
-
-.nav-link.active {
-  color: #007bff;
-  font-weight: 600;
-}
+/* Nav-link styles moved to Navbar component for better control */
+/* Keeping this section empty to avoid conflicts */
 
 /* --------------------- */
 /* Main Content Padding  */
 /* --------------------- */
 .main-content {
-  margin-top: 85px;
+  margin-top: 0;
   /* Adjusted for navbar height */
   margin-bottom: 70px;
 }
